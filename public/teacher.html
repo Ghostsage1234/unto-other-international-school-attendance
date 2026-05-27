@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Teacher — Unto Others International School</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:15px;}
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#1a237e,#4a0080);}
+.login-box{background:white;border-radius:16px;padding:36px;width:90%;max-width:400px;box-shadow:0 10px 40px rgba(0,0,0,0.25);text-align:center;}
+.login-logo{width:90px;height:90px;border-radius:50%;object-fit:cover;border:3px solid #f5c800;margin-bottom:14px;}
+.login-box h2{color:#1a237e;margin-bottom:4px;}
+.login-box p{color:#888;font-size:0.85em;margin-bottom:20px;}
+.fg{margin-bottom:14px;text-align:left;}
+.fg label{display:block;color:#444;font-size:0.82em;font-weight:600;margin-bottom:5px;}
+.fg input,.fg select,.fg textarea{width:100%;padding:9px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:0.92em;outline:none;font-family:inherit;background:white;}
+.fg input:focus,.fg select:focus{border-color:#1a237e;}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.btn{padding:10px 18px;border:none;border-radius:8px;cursor:pointer;font-size:0.88em;font-weight:600;}
+.btn-primary{background:linear-gradient(135deg,#1a237e,#283593);color:white;width:100%;}
+.btn-sm{padding:5px 11px;font-size:0.78em;border:none;border-radius:6px;cursor:pointer;font-weight:600;}
+.btn-blue{background:#0288d1;color:white;} .btn-red{background:#e53935;color:white;}
+.btn-green{background:#2e7d32;color:white;} .btn-orange{background:#f57c00;color:white;}
+.btn-purple{background:#6a1b9a;color:white;} .btn-gold{background:#f9a825;color:#333;}
+#app{display:none;}
+.topbar{background:linear-gradient(135deg,#1a237e,#283593);color:white;padding:10px 16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;}
+.topbar-left{display:flex;align-items:center;gap:10px;}
+.topbar-left img{width:38px;height:38px;border-radius:50%;object-fit:cover;border:2px solid #f5c800;}
+.topbar-title{font-size:0.88em;font-weight:700;}
+.topbar-sub{font-size:0.68em;opacity:0.8;}
+.term-badge{background:rgba(255,255,255,0.2);padding:4px 10px;border-radius:20px;font-size:0.76em;}
+.topbar-btn{background:rgba(255,255,255,0.18);color:white;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:0.82em;}
+.nav{display:flex;gap:3px;padding:8px 12px;background:white;border-bottom:2px solid #eee;overflow-x:auto;white-space:nowrap;}
+.nav button{padding:6px 11px;border:none;background:none;cursor:pointer;border-radius:7px;font-size:0.76em;color:#666;flex-shrink:0;}
+.nav button.active{background:#1a237e;color:white;}
+.content{padding:14px;max-width:900px;margin:0 auto;}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin-bottom:16px;}
+.card{background:white;border-radius:12px;padding:14px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,0.07);}
+.card .num{font-size:1.9em;font-weight:700;color:#1a237e;}
+.card .lbl{font-size:0.72em;color:#777;margin-top:3px;}
+.card.green .num{color:#2e7d32;} .card.red .num{color:#c62828;} .card.orange .num{color:#e65100;}
+table{width:100%;border-collapse:collapse;background:white;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.07);}
+th{background:#1a237e;color:white;padding:9px 11px;text-align:left;font-size:0.8em;}
+td{padding:8px 11px;border-bottom:1px solid #f0f0f0;font-size:0.82em;vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:#f5f7ff;}
+.section{background:white;border-radius:12px;padding:16px;margin-bottom:14px;box-shadow:0 2px 8px rgba(0,0,0,0.07);}
+.section h3{color:#1a237e;margin-bottom:12px;font-size:0.95em;}
+.section-border{border:2px solid #1a237e;}
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:0.72em;font-weight:600;}
+.badge-present{background:#e8f5e9;color:#2e7d32;}
+.badge-absent{background:#ffebee;color:#c62828;}
+.badge-late{background:#fff3e0;color:#e65100;}
+.badge-none{background:#f5f5f5;color:#999;}
+.alert{padding:9px 13px;border-radius:8px;margin-bottom:10px;font-size:0.83em;}
+.alert-success{background:#e8f5e9;color:#2e7d32;border-left:4px solid #43a047;}
+.alert-error{background:#ffebee;color:#c62828;border-left:4px solid #e53935;}
+.alert-warn{background:#fff3e0;color:#e65100;border-left:4px solid #fb8c00;}
+.search-bar{width:100%;padding:9px 13px;border:1.5px solid #ddd;border-radius:8px;font-size:0.88em;outline:none;margin-bottom:12px;}
+.search-bar:focus{border-color:#1a237e;}
+#qr-reader{width:100%;max-width:380px;margin:0 auto;border-radius:12px;overflow:hidden;}
+.scan-result{padding:14px;border-radius:10px;margin-top:12px;text-align:center;font-weight:600;font-size:0.92em;}
+.scan-ok{background:#e8f5e9;color:#2e7d32;border:2px solid #43a047;}
+.scan-err{background:#ffebee;color:#c62828;border:2px solid #e53935;}
+.flex-between{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;}
+.notice-card{background:#f0f4ff;border-left:4px solid #1a237e;border-radius:8px;padding:12px;margin-bottom:10px;}
+.notice-card h4{color:#1a237e;margin-bottom:4px;font-size:0.88em;}
+.notice-card p{color:#555;font-size:0.82em;}
+.class-card{background:white;border-radius:12px;padding:14px;box-shadow:0 2px 8px rgba(0,0,0,0.07);margin-bottom:10px;border-left:4px solid #1a237e;}
+.divider{border:none;border-top:2px dashed #e0e0e0;margin:16px 0;}
+</style>
+</head>
+<body>
+<div class="login-wrap" id="loginWrap">
+  <div class="login-box">
+    <img src="/images/logo.jpeg" class="login-logo" onerror="this.style.display='none'" alt="Logo">
+    <h2>👨‍🏫 Teacher Login</h2>
+    <p>Unto Others International School</p>
+    <div id="loginAlert"></div>
+    <div class="fg"><label>Username</label><input type="text" id="loginUser" placeholder="Enter username"></div>
+    <div class="fg"><label>Password</label><input type="password" id="loginPass" placeholder="Enter password" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <button class="btn btn-primary" onclick="doLogin()">Login</button>
+    <a href="/" style="display:block;text-align:center;margin-top:14px;color:#1a237e;font-size:0.85em;text-decoration:none;">← Back to Home</a>
+  </div>
+</div>
+<div id="app">
+  <div class="topbar">
+    <div class="topbar-left">
+      <img src="/images/logo.jpeg" onerror="this.style.display='none'" alt="">
+      <div><div class="topbar-title" id="teacherName">Teacher</div><div class="topbar-sub">Unto Others International School</div></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span class="term-badge" id="termBadge">📅 ...</span>
+      <button class="topbar-btn" onclick="doLogout()">Logout</button>
+    </div>
+  </div>
+  <div class="nav">
+    <button class="active" onclick="tab('dashboard',this)">📊 Dashboard</button>
+    <button onclick="tab('scan',this)">📷 Scan QR</button>
+    <button onclick="tab('manual',this)">📋 Manual</button>
+    <button onclick="tab('grades',this)">📝 Grades</button>
+    <button onclick="tab('timetable',this)">🕐 Timetable</button>
+    <button onclick="tab('notices',this)">📢 Notices</button>
+    <button onclick="tab('profile',this)">👤 Profile</button>
+  </div>
+  <div class="content">
+    <div id="tab-dashboard"></div>
+    <div id="tab-scan" style="display:none"></div>
+    <div id="tab-manual" style="display:none"></div>
+    <div id="tab-grades" style="display:none"></div>
+    <div id="tab-timetable" style="display:none"></div>
+    <div id="tab-notices" style="display:none"></div>
+    <div id="tab-profile" style="display:none"></div>
+  </div>
+</div>
+<script>
+let token = localStorage.getItem('teacher_token');
+let _myClasses = [], _currentTerm = null;
+
+if(token){
+  document.getElementById('loginWrap').style.display='none';
+  document.getElementById('app').style.display='block';
+  init();
+}
+
+async function doLogin(){
+  const u=document.getElementById('loginUser').value.trim();
+  const p=document.getElementById('loginPass').value;
+  if(!u||!p){showAlert('loginAlert','error','Enter username and password');return;}
+  const r=await fetch('/api/auth/teacher/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p})});
+  const d=await r.json();
+  if(d.token){
+    localStorage.setItem('teacher_token',d.token);
+    token=d.token;
+    document.getElementById('loginWrap').style.display='none';
+    document.getElementById('app').style.display='block';
+    init();
+  } else {
+    showAlert('loginAlert','error',d.error||'Login failed');
+  }
+}
+
+function doLogout(){
+  fetch('/api/auth/logout',{method:'POST',headers:{Authorization:'Bearer '+token}});
+  localStorage.clear();location.reload();
+}
+
+function api(url,opts={}){
+  return fetch(url,{...opts,headers:{...opts.headers,'Authorization':'Bearer '+token,'Content-Type':'application/json'}});
+}
+
+function showAlert(id,type,msg){
+  const el=document.getElementById(id);
+  if(!el)return;
+  el.innerHTML=`<div class="alert alert-${type==='error'?'error':type==='warn'?'warn':'success'}">${msg}</div>`;
+  if(type==='success')setTimeout(()=>{el.innerHTML='';},3000);
+}
+
+async function init(){
+  const [td,tr]=await Promise.all([
+    api('/api/teacher/dashboard').then(r=>r.json()),
+    api('/api/teacher/term').then(r=>r.json())
+  ]);
+  _currentTerm=tr;
+  _myClasses=td.classes||[];
+  document.getElementById('teacherName').textContent=token?JSON.parse(atob(token.split('.')[1])).name:'Teacher';
+  document.getElementById('termBadge').textContent='📅 '+(tr?.name||'No Term');
+  loadDashboard();
+}
+
+function tab(name,btn){
+  document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('[id^="tab-"]').forEach(t=>t.style.display='none');
+  document.getElementById('tab-'+name).style.display='block';
+  ({dashboard:loadDashboard,scan:loadScan,manual:loadManual,grades:loadGrades,timetable:loadTimetable,notices:loadNotices,profile:loadProfile})[name]?.();
+}
+
+async function loadDashboard(){
+  const d=await api('/api/teacher/dashboard').then(r=>r.json());
+  document.getElementById('tab-dashboard').innerHTML=`
+    <div class="cards">
+      <div class="card green"><div class="num">${d.presentToday}</div><div class="lbl">Present</div></div>
+      <div class="card red"><div class="num">${d.absentToday}</div><div class="lbl">Absent</div></div>
+      <div class="card orange"><div class="num">${d.lateToday}</div><div class="lbl">Late</div></div>
+      <div class="card"><div class="num">${d.unmarked}</div><div class="lbl">Unmarked</div></div>
+    </div>
+    ${d.classes.map(c=>`
+      <div class="class-card">
+        <div class="flex-between">
+          <div><b style="color:#1a237e">${c.name}</b></div>
+          <div style="font-size:0.78em;color:#888">${c.total} students</div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+          <span class="badge badge-present">✅ ${c.present} present</span>
+          <span class="badge badge-absent">❌ ${c.absent} absent</span>
+          <span class="badge badge-late">⏰ ${c.late} late</span>
+          ${c.unmarked>0?`<span class="badge badge-none">⚪ ${c.unmarked} unmarked</span>`:''}
+        </div>
+      </div>`).join('')}
+    ${d.notices.length?`<div class="section"><h3>📢 Latest Notices</h3>${d.notices.map(n=>`
+      <div class="notice-card"><h4>${n.title}</h4><p>${n.body}</p>
+      <small style="color:#999">${new Date(n.created_at).toLocaleDateString()}</small></div>`).join('')}</div>`:''}`;
+}
+
+// ── SCAN QR ──────────────────────────────────────────────
+let _scanner=null;
+function loadScan(){
+  document.getElementById('tab-scan').innerHTML=`
+    <div class="section section-border">
+      <h3>📷 QR Code Scanner</h3>
+      <div class="fg"><label>Status</label>
+        <select id="scan_status"><option value="present">Present</option><option value="late">Late</option><option value="absent">Absent</option></select>
+      </div>
+      <div id="qr-reader"></div>
+      <div id="scanResult"></div>
+      <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+        <button class="btn btn-primary" style="width:auto;padding:10px 20px" onclick="startScan()">▶️ Start Camera</button>
+        <button class="btn btn-sm btn-red" style="padding:10px 16px" onclick="stopScan()">⏹ Stop</button>
+      </div>
+    </div>
+    <div class="section">
+      <h3>🔢 Manual QR Entry</h3>
+      <p style="color:#666;font-size:0.82em;margin-bottom:10px">Paste QR data manually if camera unavailable.</p>
+      <div class="fg"><textarea id="manualQR" placeholder='Paste QR JSON here...' style="height:70px"></textarea></div>
+      <button class="btn btn-primary" style="width:auto;padding:10px 20px" onclick="submitManualQR()">Submit</button>
+    </div>`;
+}
+
+function startScan(){
+  if(_scanner){_scanner.stop().catch(()=>{});}
+  _scanner=new Html5Qrcode('qr-reader');
+  _scanner.start(
+    {facingMode:'environment'},
+    {fps:10,qrbox:{width:250,height:250}},
+    async (text)=>{
+      const status=document.getElementById('scan_status').value;
+      await submitScan(text,status);
+    },
+    ()=>{}
+  ).catch(e=>{
+    document.getElementById('scanResult').innerHTML=`<div class="scan-err">Camera error: ${e}</div>`;
+  });
+}
+
+function stopScan(){
+  if(_scanner){_scanner.stop().catch(()=>{});_scanner=null;}
+}
+
+async function submitScan(qrData,status){
+  stopScan();
+  const r=await api('/api/attendance/scan',{method:'POST',body:JSON.stringify({qr_data:qrData,status})});
+  const d=await r.json();
+  const el=document.getElementById('scanResult');
+  if(d.error){
+    el.innerHTML=`<div class="scan-err">❌ ${d.error}</div>`;
+    if(!d.already_marked)setTimeout(()=>startScan(),2000);
+  } else {
+    el.innerHTML=`<div class="scan-ok">✅ ${d.message}</div>`;
+    setTimeout(()=>startScan(),1500);
+  }
+}
+
+async function submitManualQR(){
+  const qrData=document.getElementById('manualQR').value.trim();
+  const status=document.getElementById('scan_status').value;
+  if(!qrData)return;
+  await submitScan(qrData,status);
+}
+
+// ── MANUAL ATTENDANCE ─────────────────────────────────────
+let _manualStudents=[];
+async function loadManual(){
+  const terms=await api('/api/teacher/terms').then(r=>r.json());
+  document.getElementById('tab-manual').innerHTML=`
+    <div class="section section-border">
+      <h3>📋 Manual Attendance</h3>
+      <div class="row2">
+        <div class="fg"><label>Class</label><select id="man_class" onchange="fetchManualStudents()">${_myClasses.map(c=>`<option value="${c.id}">${c.name}</option>`).join('')}</select></div>
+        <div class="fg"><label>Date</label><input type="date" id="man_date" value="${new Date().toISOString().split('T')[0]}" onchange="fetchManualStudents()"></div>
+      </div>
+      <button class="btn btn-primary" style="width:auto;padding:10px 20px" onclick="fetchManualStudents()">Load Students</button>
+    </div>
+    <div id="manualList"></div>`;
+  if(_myClasses.length)fetchManualStudents();
+}
+
+async function fetchManualStudents(){
+  const cid=document.getElementById('man_class')?.value;
+  const date=document.getElementById('man_date')?.value;
+  if(!cid)return;
+  const [dayInfo,students]=await Promise.all([
+    api('/api/admin/check-day?date='+date).then(r=>r.json()),
+    api(`/api/attendance/today?class_id=${cid}&date=${date}`).then(r=>r.json())
+  ]);
+  _manualStudents=students;
+  const el=document.getElementById('manualList');
+  if(!dayInfo.canMark){
+    el.innerHTML=`<div class="section"><div class="alert alert-warn">⚠️ ${dayInfo.isWeekend?'Weekend — no attendance':'Holiday: '+dayInfo.holidayName}</div></div>`;
+    return;
+  }
+  if(!students.length){el.innerHTML='<div class="section"><p style="color:#999;text-align:center;padding:20px">No students in this class.</p></div>';return;}
+  el.innerHTML=`
+    <div class="section">
+      <div class="flex-between" style="margin-bottom:10px">
+        <h3>Students (${students.length})</h3>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn-sm btn-green" onclick="markAll('present')">All Present</button>
+          <button class="btn-sm btn-red" onclick="markAll('absent')">All Absent</button>
+        </div>
+      </div>
+      <table><thead><tr><th>Name</th><th>Adm No</th><th>Status</th></tr></thead>
+      <tbody>${students.map(s=>`<tr>
+        <td><b>${s.full_name}</b></td><td>${s.admission_number}</td>
+        <td><select class="att-sel" data-id="${s.id}" style="padding:5px;border-radius:6px;border:1.5px solid #ddd;font-size:0.82em">
+          <option value="" ${!s.status?'selected':''}>-- Not Marked --</option>
+          <option value="present" ${s.status==='present'?'selected':''}>✅ Present</option>
+          <option value="absent" ${s.status==='absent'?'selected':''}>❌ Absent</option>
+          <option value="late" ${s.status==='late'?'selected':''}>⏰ Late</option>
+        </select></td></tr>`).join('')}
+      </tbody></table>
+      <div id="manAlert" style="margin-top:10px"></div>
+      <button class="btn btn-primary" style="width:auto;padding:10px 24px;margin-top:10px" onclick="saveManual()">💾 Save Attendance</button>
+    </div>`;
+}
+
+function markAll(status){
+  document.querySelectorAll('.att-sel').forEach(s=>s.value=status);
+}
+
+async function saveManual(){
+  const date=document.getElementById('man_date').value;
+  const selects=document.querySelectorAll('.att-sel');
+  let saved=0,errors=0;
+  for(const sel of selects){
+    if(!sel.value)continue;
+    const r=await api('/api/attendance/manual',{method:'POST',body:JSON.stringify({student_id:sel.dataset.id,status:sel.value,date})});
+    const d=await r.json();
+    if(d.error)errors++;else saved++;
+  }
+  showAlert('manAlert',errors?'warn':'success',`Saved: ${saved}${errors?', Errors: '+errors:''}`);
+}
+
+// ── GRADES ────────────────────────────────────────────────
+let _gradeTerms=[];
+async function loadGrades(){
+  _gradeTerms=await api('/api/teacher/terms').then(r=>r.json());
+  document.getElementById('tab-grades').innerHTML=`
+    <div class="section section-border">
+      <h3>📝 Enter Grades</h3>
+      <div class="row2">
+        <div class="fg"><label>Term</label><select id="gr_term">${_gradeTerms.map(t=>`<option value="${t.id}">${t.name}</option>`).join('')}</select></div>
+        <div class="fg"><label>Class</label><select id="gr_class" onchange="loadGradeSubjectsT()">${_myClasses.map(c=>`<option value="${c.id}">${c.name}</option>`).join('')}</select></div>
+      </div>
+      <div class="fg"><label>Subject</label><select id="gr_subject"><option value="">-- Select class first --</option></select></div>
+      <button class="btn btn-primary" style="width:auto;padding:10px 20px" onclick="loadBulkGrades()">Load Students</button>
+    </div>
+    <div id="gradesList"></div>`;
+  if(_myClasses.length)loadGradeSubjectsT();
+}
+
+async function loadGradeSubjectsT(){
+  const cid=document.getElementById('gr_class')?.value;
+  if(!cid)return;
+  const data=await api('/api/grades/subjects?class_id='+cid).then(r=>r.json());
+  const sel=document.getElementById('gr_subject');
+  if(sel)sel.innerHTML=data.length?data.map(s=>`<option value="${s.id}">${s.name}</option>`).join(''):'<option value="">No subjects for this class</option>';
+}
+
+async function loadBulkGrades(){
+  const cid=document.getElementById('gr_class').value;
+  const sid=document.getElementById('gr_subject').value;
+  const tid=document.getElementById('gr_term').value;
+  if(!sid){alert('Select a subject');return;}
+  const data=await api(`/api/grades/bulk/${cid}/${sid}/${tid}`).then(r=>r.json());
+  if(!data.length){document.getElementById('gradesList').innerHTML='<div class="section"><p style="color:#999">No students in this class.</p></div>';return;}
+  document.getElementById('gradesList').innerHTML=`
+    <div class="section">
+      <h3>Grades Entry</h3>
+      <p style="color:#666;font-size:0.78em;margin-bottom:10px">CA1+CA2+Exam = Total (max 100). Tab through to enter quickly.</p>
+      <div style="overflow-x:auto">
+      <table><thead><tr><th>Student</th><th>CA1<br><small style="font-weight:400;opacity:0.8">/30</small></th><th>CA2<br><small style="font-weight:400;opacity:0.8">/30</small></th><th>Exam<br><small style="font-weight:400;opacity:0.8">/40</small></th><th>Total</th><th>Grade</th></tr></thead>
+      <tbody>${data.map((row,i)=>`<tr>
+        <td><b>${row.student.full_name}</b><br><small style="color:#999">${row.student.admission_number}</small></td>
+        <td><input type="number" class="grade-ca1" data-sid="${row.student.id}" min="0" max="30" value="${row.grade.ca1||''}" style="width:60px;padding:5px;border:1.5px solid #ddd;border-radius:6px;font-size:0.85em" oninput="calcTotal(this)"></td>
+        <td><input type="number" class="grade-ca2" data-sid="${row.student.id}" min="0" max="30" value="${row.grade.ca2||''}" style="width:60px;padding:5px;border:1.5px solid #ddd;border-radius:6px;font-size:0.85em" oninput="calcTotal(this)"></td>
+        <td><input type="number" class="grade-exam" data-sid="${row.student.id}" min="0" max="40" value="${row.grade.exam||''}" style="width:60px;padding:5px;border:1.5px solid #ddd;border-radius:6px;font-size:0.85em" oninput="calcTotal(this)"></td>
+        <td><b class="grade-total" id="tot_${row.student.id}">${row.grade.total||0}</b></td>
+        <td><b class="grade-letter" id="grd_${row.student.id}" style="color:${row.grade.grade==='A'?'#2e7d32':row.grade.grade==='F'?'#c62828':'#555'}">${row.grade.grade||'-'}</b></td>
+      </tr>`).join('')}
+      </tbody></table>
+      </div>
+      <div id="gradeAlert" style="margin-top:10px"></div>
+      <button class="btn btn-primary" style="width:auto;padding:10px 24px;margin-top:12px" onclick="saveAllGrades()">💾 Save All Grades</button>
+    </div>`;
+}
+
+function calcTotal(el){
+  const sid=el.dataset.sid;
+  const ca1=parseFloat(document.querySelector(`.grade-ca1[data-sid="${sid}"]`)?.value)||0;
+  const ca2=parseFloat(document.querySelector(`.grade-ca2[data-sid="${sid}"]`)?.value)||0;
+  const exam=parseFloat(document.querySelector(`.grade-exam[data-sid="${sid}"]`)?.value)||0;
+  const total=ca1+ca2+exam;
+  const totEl=document.getElementById('tot_'+sid);
+  const grdEl=document.getElementById('grd_'+sid);
+  if(totEl)totEl.textContent=total;
+  if(grdEl){
+    let g=total>=75?'A':total>=65?'B':total>=55?'C':total>=45?'D':total>=40?'E':'F';
+    grdEl.textContent=g;
+    grdEl.style.color=g==='A'?'#2e7d32':g==='F'?'#c62828':'#555';
+  }
+}
+
+async function saveAllGrades(){
+  const cid=document.getElementById('gr_class').value;
+  const sid=document.getElementById('gr_subject').value;
+  const tid=document.getElementById('gr_term').value;
+  const rows=document.querySelectorAll('.grade-ca1');
+  let saved=0,errors=0;
+  for(const el of rows){
+    const studentId=el.dataset.sid;
+    const ca1=el.value||0;
+    const ca2=document.querySelector(`.grade-ca2[data-sid="${studentId}"]`)?.value||0;
+    const exam=document.querySelector(`.grade-exam[data-sid="${studentId}"]`)?.value||0;
+    const r=await api('/api/grades/enter',{method:'POST',body:JSON.stringify({student_id:studentId,subject_id:sid,term_id:tid,ca1,ca2,exam})});
+    const d=await r.json();
+    if(d.error)errors++;else saved++;
+  }
+  showAlert('gradeAlert',errors?'warn':'success',`Saved: ${saved}${errors?', Errors: '+errors:''}`);
+}
+
+// ── TIMETABLE ─────────────────────────────────────────────
+async function loadTimetable(){
+  document.getElementById('tab-timetable').innerHTML=`
+    <div class="section section-border">
+      <h3>🕐 My Timetable</h3>
+      <div class="fg"><label>Class</label><select id="tt_class" onchange="fetchMyTimetable()">${_myClasses.map(c=>`<option value="${c.id}">${c.name}</option>`).join('')}</select></div>
+    </div>
+    <div id="ttView"></div>`;
+  if(_myClasses.length)fetchMyTimetable();
+}
+
+async function fetchMyTimetable(){
+  const cid=document.getElementById('tt_class')?.value;
+  if(!cid)return;
+  const data=await api('/api/timetable?class_id='+cid).then(r=>r.json());
+  const days=['Monday','Tuesday','Wednesday','Thursday','Friday'];
+  const byDay={};days.forEach(d=>byDay[d]=[]);
+  data.forEach(e=>{if(byDay[e.day])byDay[e.day].push(e);});
+  document.getElementById('ttView').innerHTML=days.map(day=>`
+    <div class="section" style="margin-bottom:10px">
+      <h3 style="margin-bottom:8px">${day}</h3>
+      ${byDay[day].length?`<table><thead><tr><th>Period</th><th>Subject</th><th>Time</th><th>Teacher</th></tr></thead>
+      <tbody>${byDay[day].map(e=>`<tr>
+        <td><b>P${e.period}</b></td><td>${e.subject}</td>
+        <td style="white-space:nowrap">${e.start_time||''}${e.end_time?' - '+e.end_time:''}</td>
+        <td>${e.teacher_name||'-'}</td>
+      </tr>`).join('')}</tbody></table>`
+      :'<p style="color:#bbb;font-size:0.82em">No entries</p>'}
+    </div>`).join('');
+}
+
+// ── NOTICES ───────────────────────────────────────────────
+async function loadNotices(){
+  const notices=await api('/api/teacher/notices').then(r=>r.json());
+  document.getElementById('tab-notices').innerHTML=`
+    <div class="section">
+      <h3>📢 Notices (${notices.length})</h3>
+      ${notices.length?notices.map(n=>`
+        <div class="notice-card">
+          <h4>${n.title} <span style="background:#e8eaf6;color:#1a237e;border-radius:10px;padding:2px 8px;font-size:0.72em;font-weight:600">${n.target}</span></h4>
+          <p>${n.body}</p>
+          <small style="color:#999">${new Date(n.created_at).toLocaleDateString()}</small>
+        </div>`).join('')
+      :'<p style="color:#999;text-align:center;padding:20px">No notices.</p>'}
+    </div>`;
+}
+
+// ── PROFILE ───────────────────────────────────────────────
+async function loadProfile(){
+  const p=await api('/api/teacher/profile').then(r=>r.json());
+  document.getElementById('tab-profile').innerHTML=`
+    <div class="section section-border">
+      <h3>👤 My Profile</h3>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:0.87em;margin-bottom:14px">
+        <div><b>Name:</b><br>${p.full_name}</div>
+        <div><b>Username:</b><br>${p.username}</div>
+        <div><b>Subject:</b><br>${p.subject||'-'}</div>
+        <div><b>Phone:</b><br>${p.phone||'-'}</div>
+        <div><b>Email:</b><br>${p.email||'-'}</div>
+      </div>
+    </div>
+    <div class="section" style="border:2px solid #1a237e">
+      <h3>🔐 Change Password</h3>
+      <div class="fg"><label>Current Password</label><input type="password" id="tp_old" placeholder="Current password"></div>
+      <div class="fg"><label>New Password (min 6)</label><input type="password" id="tp_new" placeholder="New password"></div>
+      <div class="fg"><label>Confirm</label><input type="password" id="tp_conf" placeholder="Confirm new password"></div>
+      <div id="tpAlert"></div>
+      <button class="btn btn-primary" style="width:auto;padding:10px 20px" onclick="changeTeacherPw()">Change Password</button>
+    </div>`;
+}
+
+async function changeTeacherPw(){
+  const op=document.getElementById('tp_old').value;
+  const np=document.getElementById('tp_new').value;
+  const cp=document.getElementById('tp_conf').value;
+  if(!op||!np||!cp){showAlert('tpAlert','error','All fields required');return;}
+  if(np!==cp){showAlert('tpAlert','error','Passwords do not match');return;}
+  if(np.length<6){showAlert('tpAlert','error','Min 6 characters');return;}
+  const r=await api('/api/auth/teacher/change-password',{method:'POST',body:JSON.stringify({oldPassword:op,newPassword:np})});
+  const d=await r.json();
+  showAlert('tpAlert',d.error?'error':'success',d.error||d.message);
+  if(!d.error)setTimeout(()=>{localStorage.clear();location.reload();},2000);
+}
+</script>
+</body>
+</html>

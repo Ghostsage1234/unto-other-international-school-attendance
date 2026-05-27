@@ -1,0 +1,1340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — Unto Others International School</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:15px;}
+/* LOGIN */
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#4a0080,#1a237e);}
+.login-box{background:white;border-radius:16px;padding:36px;width:90%;max-width:400px;box-shadow:0 10px 40px rgba(0,0,0,0.25);text-align:center;}
+.login-logo{width:90px;height:90px;border-radius:50%;object-fit:cover;border:3px solid #f5c800;margin-bottom:14px;}
+.login-box h2{color:#4a0080;margin-bottom:4px;}
+.login-box p{color:#888;font-size:0.85em;margin-bottom:20px;}
+/* FORMS */
+.fg{margin-bottom:14px;text-align:left;}
+.fg label{display:block;color:#444;font-size:0.82em;font-weight:600;margin-bottom:5px;}
+.fg input,.fg select,.fg textarea{width:100%;padding:9px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:0.92em;outline:none;font-family:inherit;background:white;}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:#4a0080;}
+.fg textarea{resize:vertical;min-height:80px;}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+/* BUTTONS */
+.btn{padding:10px 18px;border:none;border-radius:8px;cursor:pointer;font-size:0.88em;font-weight:600;transition:opacity 0.15s;}
+.btn:hover{opacity:0.88;}
+.btn-primary{background:linear-gradient(135deg,#4a0080,#6a1b9a);color:white;width:100%;}
+.btn-sm{padding:5px 11px;font-size:0.78em;border:none;border-radius:6px;cursor:pointer;font-weight:600;}
+.btn-blue{background:#0288d1;color:white;}
+.btn-red{background:#e53935;color:white;}
+.btn-green{background:#2e7d32;color:white;}
+.btn-purple{background:#6a1b9a;color:white;}
+.btn-orange{background:#f57c00;color:white;}
+.btn-gold{background:#f9a825;color:#333;}
+.btn-teal{background:#00796b;color:white;}
+.btn-grey{background:#757575;color:white;}
+/* APP LAYOUT */
+#app{display:none;}
+.topbar{background:linear-gradient(135deg,#4a0080,#6a1b9a);color:white;padding:10px 16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;}
+.topbar-left{display:flex;align-items:center;gap:10px;}
+.topbar-left img{width:38px;height:38px;border-radius:50%;object-fit:cover;border:2px solid #f5c800;}
+.topbar-title{font-size:0.88em;font-weight:700;line-height:1.2;}
+.topbar-sub{font-size:0.68em;opacity:0.8;}
+.term-badge{background:rgba(255,255,255,0.2);padding:4px 10px;border-radius:20px;font-size:0.76em;}
+.topbar-btn{background:rgba(255,255,255,0.18);color:white;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:0.82em;}
+.nav{display:flex;gap:3px;padding:8px 12px;background:white;border-bottom:2px solid #eee;overflow-x:auto;white-space:nowrap;}
+.nav button{padding:6px 11px;border:none;background:none;cursor:pointer;border-radius:7px;font-size:0.76em;color:#666;flex-shrink:0;}
+.nav button.active{background:#4a0080;color:white;}
+.content{padding:14px;max-width:1100px;margin:0 auto;}
+/* CARDS */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin-bottom:16px;}
+.card{background:white;border-radius:12px;padding:14px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,0.07);}
+.card .num{font-size:1.9em;font-weight:700;color:#4a0080;}
+.card .lbl{font-size:0.72em;color:#777;margin-top:3px;}
+.card.green .num{color:#2e7d32;} .card.red .num{color:#c62828;} .card.orange .num{color:#e65100;} .card.blue .num{color:#0277bd;}
+/* TABLE */
+table{width:100%;border-collapse:collapse;background:white;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.07);}
+th{background:#4a0080;color:white;padding:9px 11px;text-align:left;font-size:0.8em;}
+td{padding:8px 11px;border-bottom:1px solid #f0f0f0;font-size:0.82em;vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:#faf5ff;}
+/* SECTIONS */
+.section{background:white;border-radius:12px;padding:16px;margin-bottom:14px;box-shadow:0 2px 8px rgba(0,0,0,0.07);}
+.section h3{color:#4a0080;margin-bottom:12px;font-size:0.95em;display:flex;align-items:center;gap:6px;}
+.section-border{border:2px solid #4a0080;}
+/* BADGES */
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:0.72em;font-weight:600;}
+.badge-present,.badge-paid{background:#e8f5e9;color:#2e7d32;}
+.badge-absent,.badge-unpaid{background:#ffebee;color:#c62828;}
+.badge-late,.badge-partial{background:#fff3e0;color:#e65100;}
+.badge-blue{background:#e3f2fd;color:#0277bd;}
+/* ALERTS */
+.alert{padding:9px 13px;border-radius:8px;margin-bottom:10px;font-size:0.83em;}
+.alert-success{background:#e8f5e9;color:#2e7d32;border-left:4px solid #43a047;}
+.alert-error{background:#ffebee;color:#c62828;border-left:4px solid #e53935;}
+.alert-warn{background:#fff3e0;color:#e65100;border-left:4px solid #fb8c00;}
+/* SEARCH */
+.search-bar{width:100%;padding:9px 13px;border:1.5px solid #ddd;border-radius:8px;font-size:0.88em;outline:none;margin-bottom:12px;}
+.search-bar:focus{border-color:#4a0080;}
+/* MODALS */
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:1000;align-items:center;justify-content:center;padding:16px;}
+.modal.show{display:flex;}
+.modal-box{background:white;border-radius:16px;padding:22px;width:100%;max-width:440px;max-height:90vh;overflow-y:auto;}
+.modal-box h3{color:#4a0080;margin-bottom:14px;font-size:0.95em;}
+.modal-cancel{width:100%;padding:9px;margin-top:8px;border:1.5px solid #ddd;border-radius:8px;cursor:pointer;background:none;font-size:0.88em;}
+/* PRINT */
+@media print{
+  .no-print{display:none!important;}
+  body{background:white;}
+  .section,.card,table{box-shadow:none!important;}
+}
+/* MISC */
+.divider{border:none;border-top:2px dashed #e0e0e0;margin:18px 0;}
+.tag{display:inline-block;padding:2px 8px;border-radius:10px;font-size:0.72em;background:#ede7f6;color:#4a0080;margin-left:4px;}
+.flex-between{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;}
+.action-btns{display:flex;gap:4px;flex-wrap:wrap;}
+</style>
+</head>
+
+
+<!-- LOGIN -->
+<div class="login-wrap" id="loginWrap">
+  <div class="login-box">
+    <img src="/images/logo.jpeg" class="login-logo" onerror="this.style.display='none'" alt="Logo">
+    <h2>🔐 Admin Login</h2>
+    <p>Unto Others International School</p>
+    <div id="loginAlert"></div>
+    <div class="fg"><label>Username</label><input type="text" id="loginUser" placeholder="Enter username"></div>
+    <div class="fg"><label>Password</label><input type="password" id="loginPass" placeholder="Enter password" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <button class="btn btn-primary" onclick="doLogin()">Login</button>
+    <a href="/" style="display:block;text-align:center;margin-top:14px;color:#4a0080;font-size:0.85em;text-decoration:none;">← Back to Home</a>
+  </div>
+</div>
+
+<!-- MODALS -->
+<div class="modal" id="resetPwModal">
+  <div class="modal-box">
+    <h3>🔑 Reset Password — <span id="resetName"></span></h3>
+    <div class="fg"><label>New Password</label><input type="password" id="resetPw1" placeholder="Min 6 characters"></div>
+    <div class="fg"><label>Confirm</label><input type="password" id="resetPw2" placeholder="Confirm password"></div>
+    <div id="resetAlert"></div>
+    <button class="btn btn-primary" onclick="doResetPw()" style="margin-bottom:8px">Reset Password</button>
+    <button class="modal-cancel" onclick="closeModal('resetPwModal')">Cancel</button>
+  </div>
+</div>
+
+<div class="modal" id="editStudentModal">
+  <div class="modal-box">
+    <h3>✏️ Edit Student</h3>
+    <div class="fg"><label>Full Name</label><input id="es_name"></div>
+    <div class="fg"><label>Class</label><select id="es_class"></select></div>
+    <div class="row2">
+      <div class="fg"><label>Gender</label><select id="es_gender"><option value="">-</option><option>Male</option><option>Female</option></select></div>
+      <div class="fg"><label>Date of Birth</label><input type="date" id="es_dob"></div>
+    </div>
+    <div class="fg"><label>Parent Name</label><input id="es_parent"></div>
+    <div class="fg"><label>Parent Phone</label><input id="es_pphone"></div>
+    <div class="fg"><label>Address</label><input id="es_address"></div>
+    <div id="esAlert"></div>
+    <button class="btn btn-primary" onclick="saveEditStudent()" style="margin-bottom:8px">Save Changes</button>
+    <button class="modal-cancel" onclick="closeModal('editStudentModal')">Cancel</button>
+  </div>
+</div>
+
+<div class="modal" id="paymentModal">
+  <div class="modal-box">
+    <h3>💰 Record Payment</h3>
+    <div class="fg"><label>Student</label><input id="pm_student" readonly style="background:#f5f5f5"></div>
+    <div class="fg"><label>Fee Item</label><select id="pm_fee"></select></div>
+    <div class="fg"><label>Amount Paid</label><input type="number" id="pm_amount" placeholder="0.00"></div>
+    <div class="fg"><label>Payment Date</label><input type="date" id="pm_date"></div>
+    <div class="row2">
+      <div class="fg"><label>Method</label><select id="pm_method"><option value="cash">Cash</option><option value="bank">Bank Transfer</option><option value="pos">POS</option><option value="cheque">Cheque</option></select></div>
+      <div class="fg"><label>Receipt No.</label><input id="pm_receipt" placeholder="Optional"></div>
+    </div>
+    <div class="fg"><label>Note</label><input id="pm_note" placeholder="Optional"></div>
+    <div id="pmAlert"></div>
+    <button class="btn btn-primary" onclick="savePay()" style="margin-bottom:8px">Record Payment</button>
+    <button class="modal-cancel" onclick="closeModal('paymentModal')">Cancel</button>
+  </div>
+</div>
+
+<div class="modal" id="receiptModal">
+  <div class="modal-box" id="receiptContent"></div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="topbar no-print">
+    <div class="topbar-left">
+      <img src="/images/logo.jpeg" onerror="this.style.display='none'" alt="">
+      <div><div class="topbar-title">Unto Others International School</div><div class="topbar-sub">Admin Portal</div></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span class="term-badge" id="termBadge">📅 ...</span>
+      <button class="topbar-btn" onclick="doLogout()">Logout</button>
+    </div>
+  </div>
+  <div class="nav no-print">
+    <button class="active" onclick="tab('dashboard',this)">📊 Dashboard</button>
+    <button onclick="tab('students',this)">🎓 Students</button>
+    <button onclick="tab('teachers',this)">👨‍🏫 Teachers</button>
+    <button onclick="tab('attendance',this)">📋 Attendance</button>
+    <button onclick="tab('fees',this)">💰 Fees</button>
+    <button onclick="tab('grades',this)">📝 Grades</button>
+    <button onclick="tab('timetable',this)">🕐 Timetable</button>
+    <button onclick="tab('reports',this)">📁 Reports</button>
+    <button onclick="tab('notices',this)">📢 Notices</button>
+    <button onclick="tab('terms',this)">📅 Terms</button>
+    <button onclick="tab('settings',this)">⚙️ Settings</button>
+  </div>
+  <div class="content">
+    <div id="tab-dashboard"></div>
+    <div id="tab-students" style="display:none"></div>
+    <div id="tab-teachers" style="display:none"></div>
+    <div id="tab-attendance" style="display:none"></div>
+    <div id="tab-fees" style="display:none"></div>
+    <div id="tab-grades" style="display:none"></div>
+    <div id="tab-timetable" style="display:none"></div>
+    <div id="tab-reports" style="display:none"></div>
+    <div id="tab-notices" style="display:none"></div>
+    <div id="tab-terms" style="display:none"></div>
+    <div id="tab-settings" style="display:none"></div>
+  </div>
+</div>
+
+
+
+
+<script>
+function printSection(id){
+  const content = document.getElementById(id).innerHTML;
+
+  const win = window.open('', '', 'width=900,height=700');
+
+  win.document.write(`
+    
+      <head>
+        <title>Print</title>
+        <style>
+          body { font-family: Arial; padding: 20px; }
+          table { width: 100%; border-collapse: collapse; }
+          th, td { border: 1px solid #000; padding: 6px; }
+        </style>
+      </head>
+      
+        ${content}
+      
+    
+  `);
+</script>
+
+
+
+
+// ── DASHBOARD ─────────────────────────────────────────────
+async function loadDashboard(){
+  const d=await api('/api/admin/dashboard').then(r=>r.json());
+  document.getElementById('tab-dashboard').innerHTML=`
+    <div class="cards">
+      <div class="card"><div class="num">${d.totalStudents}</div><div class="lbl">Students</div></div>
+      <div class="card blue"><div class="num">${d.totalTeachers}</div><div class="lbl">Teachers</div></div>
+      <div class="card green"><div class="num">${d.present}</div><div class="lbl">Present</div></div>
+      <div class="card red"><div class="num">${d.absent}</div><div class="lbl">Absent</div></div>
+      <div class="card orange"><div class="num">${d.late}</div><div class="lbl">Late</div></div>
+      <div class="card"><div class="num">${d.unmarked}</div><div class="lbl">Unmarked</div></div>
+    </div>
+    <div class="section">
+      <h3>📊 Today by Class — ${d.today}</h3>
+      <table><thead><tr><th>Class</th><th>Students</th><th>Present</th><th>Absent</th><th>Late</th><th>Rate</th></tr></thead>
+      <tbody>${d.byClass.filter(c=>c.total>0).map(c=>{
+        const rate=c.total?Math.round((c.present/c.total)*100):0;
+        return`<tr><td><b>${c.name}</b></td><td>${c.total}</td>
+          <td><span class="badge badge-present">${c.present}</span></td>
+          <td><span class="badge badge-absent">${c.absent}</span></td>
+          <td><span class="badge badge-late">${c.late}</span></td>
+          <td><b style="color:${rate>=75?'#2e7d32':rate>=50?'#e65100':'#c62828'}">${rate}%</b></td></tr>`;
+      }).join('')}</tbody></table>
+    </div>`;
+}
+
+// ── STUDENTS ──────────────────────────────────────────────
+let _students=[];
+async function loadStudents(){
+  _students=await api('/api/admin/students').then(r=>r.json());
+  document.getElementById('tab-students').innerHTML=`
+    <div class="section section-border">
+      <h3>➕ Add New Student</h3>
+      <div class="row2">
+        <div class="fg"><label>Full Name *</label><input id="s_name" placeholder="Student full name"></div>
+        <div class="fg"><label>Admission No. *</label><input id="s_adm" placeholder="e.g. ADM001"></div>
+      </div>
+      <div class="row2">
+        <div class="fg"><label>Class *</label><select id="s_class">${_classes.map(c=>`<option value="${c.id}">${c.name}</option>`).join('')}</select></div>
+        <div class="fg"><label>Gender</label><select id="s_gender"><option value="">-</option><option>Male</option><option>Female</option></select></div>
+      </div>
+      <div class="row2">
+        <div class="fg"><label>Parent Name</label><input id="s_parent" placeholder="Parent/Guardian"></div>
+        <div class="fg"><label>Parent Phone</label><input id="s_pphone" placeholder="Phone number"></div>
+      </div>
+      <div id="sAddAlert"></div>
+      <button class="btn btn-primary" style="width:auto;padding:10px 24px" onclick="addStudent()">➕ Add Student</button>
+    </div>
+    <div class="section">
+      <div class="flex-between" style="margin-bottom:10px">
+        <h3>🎓 All Students (${_students.length})</h3>
+        <select onchange="filterByClass(this.value)" style="padding:6px 10px;border:1.5px solid #ddd;border-radius:8px;font-size:0.82em">
+          <option value="">All Classes</option>
+          ${_classes.map(c=>`<option value="${c.id}">${c.name}</option>`).join('')}
+        </select>
+      </div>
+      <input class="search-bar" placeholder="🔍 Search name, admission number..." oninput="filterStudents(this.value)" id="studentSearch">
+      <div id="studentTable"></div>
+    </div>`;
+  renderStudents(_students);
+}
+
+function renderStudents(list){
+  if(!list.length){document.getElementById('studentTable').innerHTML='<p style="color:#999;text-align:center;padding:20px">No students found.</p>';return;}
+  document.getElementById('studentTable').innerHTML=`
+    <table><thead><tr><th>Name</th><th>Adm No</th><th>Class</th><th>Present</th><th>Absent</th><th>Late</th><th>Actions</th></tr></thead>
+    <tbody>${list.map(s=>`<tr>
+      <td><b>${s.full_name}</b>${s.gender?`<br><small style="color:#999">${s.gender}</small>`:''}</td>
+      <td>${s.admission_number}</td><td>${s.class_name}</td>
+      <td><span class="badge badge-present">${s.stats?.present||0}</span></td>
+      <td><span class="badge badge-absent">${s.stats?.absent||0}</span></td>
+      <td><span class="badge badge-late">${s.stats?.late||0}</span></td>
+      <td><div class="action-btns">
+        <button class="btn-sm btn-blue" onclick="showQR(${s.id},'${s.full_name.replace(/'/g,"\\'")}','${s.admission_number}','${s.class_name}')">QR</button>
+        <button class="btn-sm btn-purple" onclick="openEditStudent(${s.id})">Edit</button>
+        <button class="btn-sm btn-red" onclick="delStudent(${s.id})">Del</button>
+      </div></td></tr>`).join('')}
+    </tbody></table>`;
+}
+
+function filterStudents(q){
+  const sel=document.getElementById('studentSearch');
+  renderStudents(_students.filter(s=>
+    s.full_name.toLowerCase().includes(q.toLowerCase())||
+    s.admission_number.toLowerCase().includes(q.toLowerCase())));
+}
+
+function filterByClass(cid){
+  renderStudents(cid?_students.filter(s=>s.class_id==cid):_students);
+}
+
+async function addStudent(){
+  const r=await api('/api/admin/students',{method:'POST',body:JSON.stringify({
+    full_name:document.getElementById('s_name').value,
+    admission_number:document.getElementById('s_adm').value,
+    class_id:document.getElementById('s_class').value,
+    gender:document.getElementById('s_gender').value,
+    parent_name:document.getElementById('s_parent').value,
+    parent_phone:document.getElementById('s_pphone').value
+  })});
+  const d=await r.json();
+  showAlert('sAddAlert',d.error?'error':'success',d.error||d.message);
+  if(!d.error){
+    ['s_name','s_adm','s_parent','s_pphone'].forEach(id=>document.getElementById(id).value='');
+    loadStudents();
+  }
+}
+
+async function delStudent(id){
+  if(!confirm('Delete this student? This cannot be undone.'))return;
+  await api('/api/admin/students/'+id,{method:'DELETE'});
+  loadStudents();
+}
+
+let _editSid=null;
+function openEditStudent(id){
+  const s=_students.find(x=>x.id==id);if(!s)return;
+  _editSid=id;
+  document.getElementById('es_name').value=s.full_name;
+  document.getElementById('es_class').innerHTML=_classes.map(c=>`<option value="${c.id}"${c.id==s.class_id?' selected':''}>${c.name}</option>`).join('');
+  document.getElementById('es_gender').value=s.gender||'';
+  document.getElementById('es_dob').value=s.date_of_birth||'';
+  document.getElementById('es_parent').value=s.parent_name||'';
+  document.getElementById('es_pphone').value=s.parent_phone||'';
+  document.getElementById('es_address').value=s.address||'';
+  document.getElementById('esAlert').innerHTML='';
+  document.getElementById('editStudentModal').classList.add('show');
+}
+
+async function saveEditStudent(){
+  const r=await api('/api/admin/students/'+_editSid,{method:'PUT',body:JSON.stringify({
+    full_name:document.getElementById('es_name').value,
+    class_id:document.getElementById('es_class').value,
+    gender:document.getElementById('es_gender').value,
+    date_of_birth:document.getElementById('es_dob').value,
+    parent_name:document.getElementById('es_parent').value,
+    parent_phone:document.getElementById('es_pphone').value,
+    address:document.getElementById('es_address').value
+  })});
+  const d=await r.json();
+  showAlert('esAlert',d.error?'error':'success',d.error||d.message);
+  if(!d.error){closeModal('editStudentModal');loadStudents();}
+}
+
+async function showQR(id,name,adm,cls){
+  const d=await api('/api/students/'+id+'/qr').then(r=>r.json());
+  const w=window.open('','_blank','width=440,height=580');
+  w.document.write(`<!DOCTYPE html><body style="font-family:sans-serif;text-align:center;padding:24px;margin:0">
+    <img src="/images/logo.jpeg" style="width:70px;height:70px;border-radius:50%;object-fit:cover;border:3px solid #f5c800">
+    <h2 style="color:#4a0080;margin:8px 0 2px">Unto Others International School</h2>
+    <p style="color:#888;font-size:0.8em;margin-bottom:12px">Faith and Righteousness</p>
+    <h3 style="margin-bottom:4px">${name}</h3>
+    <p style="color:#666;font-size:0.85em;margin-bottom:2px">Adm: ${adm}</p>
+    <p style="color:#4a0080;font-size:0.85em;font-weight:600;margin-bottom:12px">${cls}</p>
+    <img src="${d.qr}" style="width:240px;height:240px">
+     onclick="printSection('rcPrint')"
+style="margin-top:16px;padding:10px 28px;background:#4a0080;color:white;border:none;border-radius:8px;cursor:pointer;font-size:1em">
+
+🖨️ Print Report Card
+</button>
+<br>
+<button onclick="printSection('rcPrint')"
+style="margin-top:16px;padding:10px 28px;background:#4a0080;color:white;border:none;border-radius:8px;cursor:pointer;font-size:1em">
+🖨️ Print Report Card
+</button>
+
+
+`);
+}
+
+}  const content = document.getElementById(id).innerHTML;
+
+  const win = window.open('', '', 'width=900,height=700');
+
+  win.document.write(`
+    
+      <head>
+        <title>Print</title>
+        <style>
+          body { font-family: Arial; padding: 20px; }
+          table { width: 100%; border-collapse: collapse; }
+          th, td { border: 1px solid #000; padding: 6px; }
+        </style>
+      </head>
+      
+        ${content}
+        <script>
+          window.onload = () => {
+            window.print();
+            window.onafterprint = () => window.close();
+          }
+        </script>
+      
+    
+  `);
+
+  win.document.close();
+}
+
+// ── TEACHERS ──────────────────────────────────────────────
+let _teachers=[], _resetTid=null, _assignTid=null;
+async function loadTeachers(){
+  _teachers=await api('/api/admin/teachers').then(r=>r.json());
+  document.getElementById('tab-teachers').innerHTML=`
+    <div class="section section-border">
+      <h3>➕ Add Teacher</h3>
+      <div class="row2">
+        <div class="fg"><label>Full Name *</label><input id="t_name" placeholder="Full name"></div>
+        <div class="fg"><label>Username *</label><input id="t_user" placeholder="Login username"></div>
+      </div>
+      <div class="row2">
+        <div class="fg"><label>Password *</label><input type="password" id="t_pass" placeholder="Initial password"></div>
+        <div class="fg"><label>Subject</label><input id="t_subject" placeholder="Main subject"></div>
+      </div>
+      <div class="row2">
+        <div class="fg"><label>Phone</label><input id="t_phone" placeholder="Phone number"></div>
+        <div class="fg"><label>Email</label><input id="t_email" placeholder="Email address"></div>
+      </div>
+      <div id="tAddAlert"></div>
+      <button class="btn btn-primary" style="width:auto;padding:10px 24px" onclick="addTeacher()">➕ Add Teacher</button>
+    </div>
+    <div class="section">
+      <h3>👨‍🏫 All Teachers (${_teachers.length})</h3>
+      <input class="search-bar" placeholder="🔍 Search teachers..." oninput="filterTeachers(this.value)">
+      <div id="teacherTable"></div>
+    </div>
+    <div id="assignSection" class="section" style="display:none">
+      <h3>📚 Assign Classes</h3>
+      <div id="assignContent"></div>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <button class="btn btn-primary" style="width:auto;padding:10px 20px" onclick="saveAssign()">Save</button>
+        <button class="btn btn-grey btn-sm" style="padding:10px 16px" onclick="document.getElementById('assignSection').style.display='none'">Cancel</button>
+      </div>
+    </div>`;
+  renderTeachers(_teachers);
+}
+
+function renderTeachers(list){
+  document.getElementById('teacherTable').innerHTML=list.length?`
+    <table><thead><tr><th>Name</th><th>Username</th><th>Subject</th><th>Classes</th><th>Actions</th></tr></thead>
+    <tbody>${list.map(t=>`<tr>
+      <td><b>${t.full_name}</b>${t.phone?`<br><small style="color:#999">${t.phone}</small>`:''}</td>
+      <td>${t.username}</td><td>${t.subject||'-'}</td>
+      <td style="max-width:150px">${t.classes.map(c=>c.name).join(', ')||'<i style="color:#bbb">None</i>'}</td>
+      <td><div class="action-btns">
+        <button class="btn-sm btn-blue" onclick="openAssign(${t.id},'${t.full_name.replace(/'/g,"\\'")}')">Classes</button>
+        <button class="btn-sm btn-purple" onclick="openResetPw(${t.id},'${t.full_name.replace(/'/g,"\\'")}')">🔑 PW</button>
+        <button class="btn-sm btn-red" onclick="delTeacher(${t.id})">Del</button>
+      </div></td></tr>`).join('')}
+    </tbody></table>`:'<p style="color:#999;text-align:center;padding:20px">No teachers yet.</p>';
+}
+
+function filterTeachers(q){renderTeachers(_teachers.filter(t=>t.full_name.toLowerCase().includes(q.toLowerCase())||t.username.toLowerCase().includes(q.toLowerCase())));}
+
+async function addTeacher(){
+  const r=await api('/api/admin/teachers',{method:'POST',body:JSON.stringify({
+    full_name:document.getElementById('t_name').value,
+    username:document.getElementById('t_user').value,
+    password:document.getElementById('t_pass').value,
+    subject:document.getElementById('t_subject').value,
+    phone:document.getElementById('t_phone').value,
+    email:document.getElementById('t_email').value
+  })});
+  const d=await r.json();
+  showAlert('tAddAlert',d.error?'error':'success',d.error||d.message);
+  if(!d.error){['t_name','t_user','t_pass','t_subject','t_phone','t_email'].forEach(id=>document.getElementById(id).value='');loadTeachers();}
+}
+
+async function delTeacher(id){
+  if(!confirm('Delete this teacher?'))return;
+  await api('/api/admin/teachers/'+id,{method:'DELETE'});loadTeachers();
+}
+
+function openResetPw(id,name){
+  _resetTid=id;
+  document.getElementById('resetName').textContent=name;
+  document.getElementById('resetPw1').value='';
+  document.getElementById('resetPw2').value='';
+  document.getElementById('resetAlert').innerHTML='';
+  document.getElementById('resetPwModal').classList.add('show');
+}
+
+async function doResetPw(){
+  const p1=document.getElementById('resetPw1').value;
+  const p2=document.getElementById('resetPw2').value;
+  if(p1!==p2){showAlert('resetAlert','error','Passwords do not match');return;}
+  if(p1.length<6){showAlert('resetAlert','error','Min 6 characters');return;}
+  const r=await api('/api/admin/teachers/'+_resetTid+'/reset-password',{method:'POST',body:JSON.stringify({new_password:p1})});
+  const d=await r.json();
+  showAlert('resetAlert',d.error?'error':'success',d.error||d.message);
+  if(!d.error)setTimeout(()=>closeModal('resetPwModal'),1500);
+}
+
+function openAssign(id,name){
+  _assignTid=id;
+  const teacher=_teachers.find(t=>t.id==id);
+  const assigned=teacher?teacher.classes.map(c=>c.id):[];
+  document.getElementById('assignContent').innerHTML=`
+    <p style="margin-bottom:10px;color:#666;font-size:0.88em">Select classes for <b>${name}</b>:</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px">
+      ${_classes.map(c=>`<label style="display:flex;align-items:center;gap:6px;font-size:0.85em;cursor:pointer">
+        <input type="checkbox" value="${c.id}" class="cls-chk" ${assigned.includes(c.id)?'checked':''}> ${c.name}
+      </label>`).join('')}
+    </div>`;
+  document.getElementById('assignSection').style.display='block';
+  document.getElementById('assignSection').scrollIntoView({behavior:'smooth'});
+}
+
+async function saveAssign(){
+  const ids=[...document.querySelectorAll('.cls-chk:checked')].map(c=>c.value);
+  await api('/api/admin/teachers/'+_assignTid+'/classes',{method:'POST',body:JSON.stringify({class_ids:ids})});
+  document.getElementById('assignSection').style.display='none';
+  loadTeachers();
+}
+
+// ── ATTENDANCE ─────────────────────────────────────────────
+let _attData=[];
+async function loadAttendance(){
+  const today=new Date().toISOString().split('T')[0];
+  document.getElementById('tab-attendance').innerHTML=`
+    <div class="section section-border">
+      <h3>🔍 View Attendance</h3>
+      <div class="row2">
+        <div class="fg"><label>Date</label><input type="date" id="att_date" value="${today}"></div>
+        <div class="fg"><label>Class</label><select id="att_class"><option value="">All Classes</option>${_classes.map(c=>`<option value="${c.id}">${c.name}</option>`).join('')}</select></div>
+      </div>
+      <button class="btn btn-primary" style="width:auto;padding:10px 20px" onclick="fetchAtt()">Search</button>
+    </div>
+    <div id="attResults"></div>
+    <hr class="divider">
+    <div class="section" style="border:2px solid #1a237e">
+      <h3>🗓️ Holidays & No-School Days</h3>
+      <p style="color:#666;font-size:0.82em;margin-bottom:12px">Teachers cannot mark attendance on these days.</p>
+      <div class="row2">
+        <div class="fg"><label>Date</label><input type="date" id="hol_date"></div>
+        <div class="fg"><label>Name</label><input id="hol_name" placeholder="e.g. Independence Day"></div>
+      </div>
+      <div id="holAlert"></div>
+      <button class="btn btn-primary" style="width:auto;padding:10px 20px;margin-bottom:14px" onclick="addHoliday()">Add Holiday</button>
+      <div id="holList"></div>
+    </div>`;
+  loadHolidays();
+}
+
+async function fetchAtt(){
+  const date=document.getElementById('att_date').value;
+  const cls=document.getElementById('att_class').value;
+  let url='/api/admin/attendance?';
+  if(date)url+='date='+date+'&';
+  if(cls)url+='class_id='+cls;
+  _attData=await api(url).then(r=>r.json());
+  const el=document.getElementById('attResults');
+  if(!_attData.length){el.innerHTML='<div class="section"><p style="color:#999;text-align:center;padding:20px">No attendance records found.</p></div>';return;}
+  el.innerHTML=`
+    <div class="section">
+      <div class="flex-between" style="margin-bottom:10px">
+        <h3>Results (${_attData.length})</h3>
+        <a href="/api/admin/attendance/export?date=${date}&class_id=${cls}&token=${token}" target="_blank" class="btn-sm btn-green" style="text-decoration:none;padding:6px 12px;border-radius:6px">⬇️ Export CSV</a>
+      </div>
+      <input class="search-bar" placeholder="🔍 Search..." oninput="filterAtt(this.value)">
+      <div id="attTable"></div>
+    </div>`;
+  renderAtt(_attData);
+}
+
+function renderAtt(list){
+  document.getElementById('attTable').innerHTML=`
+    <table><thead><tr><th>Student</th><th>Adm No</th><th>Class</th><th>Date</th><th>Status</th><th>Teacher</th><th>Edit</th></tr></thead>
+    <tbody>${list.map(a=>`<tr>
+      <td>${a.full_name}</td><td>${a.admission_number}</td><td>${a.class_name}</td><td>${a.date}</td>
+      <td><span class="badge badge-${a.status}">${a.status}</span></td><td>${a.teacher_name}</td>
+      <td><select onchange="updateAtt(${a.id},this.value)" style="padding:4px;border-radius:5px;border:1px solid #ddd;font-size:0.8em">
+        <option value="present"${a.status==='present'?' selected':''}>Present</option>
+        <option value="absent"${a.status==='absent'?' selected':''}>Absent</option>
+        <option value="late"${a.status==='late'?' selected':''}>Late</option>
+      </select></td></tr>`).join('')}
+    </tbody></table>`;
+}
+
+function filterAtt(q){renderAtt(_attData.filter(a=>a.full_name.toLowerCase().includes(q.toLowerCase())||a.class_name.toLowerCase().includes(q.toLowerCase())));}
+async function updateAtt(id,status){await api('/api/admin/attendance/'+id,{method:'PUT',body:JSON.stringify({status})});}
+
+async function loadHolidays(){
+  const hols=await api('/api/admin/holidays').then(r=>r.json());
+  const days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  document.getElementById('holList').innerHTML=hols.length?`
+    <table><thead><tr><th>Date</th><th>Day</th><th>Name</th><th>Action</th></tr></thead>
+    <tbody>${hols.map(h=>`<tr>
+      <td>${h.date}</td><td>${days[new Date(h.date+'T12:00:00').getDay()]}</td><td><b>${h.name}</b></td>
+      <td><button class="btn-sm btn-red" onclick="delHoliday(${h.id})">Remove</button></td>
+    </tr>`).join('')}</tbody></table>`
+    :'<p style="color:#999">No holidays added.</p>';
+}
+
+async function addHoliday(){
+  const r=await api('/api/admin/holidays',{method:'POST',body:JSON.stringify({date:document.getElementById('hol_date').value,name:document.getElementById('hol_name').value})});
+  const d=await r.json();
+  showAlert('holAlert',d.error?'error':'success',d.error||d.message);
+  if(!d.error){document.getElementById('hol_date').value='';document.getElementById('hol_name').value='';loadHolidays();}
+}
+
+async function delHoliday(id){
+  if(!confirm('Remove holiday?'))return;
+  await api('/api/admin/holidays/'+id,{method:'DELETE'});loadHolidays();
+}
+
+// ── FEES ──────────────────────────────────────────────────
+let _feeStructures=[], _payStudentId=null;
+async function loadFees(){
+  document.getElementById('tab-fees').innerHTML=`
+    <div class="section section-border">
+      <h3>🏗️ Fee Structures</h3>
+      <p style="color:#666;font-size:0.82em;margin-bottom:12px">Set fees per class per term.</p>
+      <div class="row2">
+        <div class="fg"><label>Term</label><select id="fs_term">${_terms.map(t=>`<option value="${t.id}">${t.name}</option>`).join('')}</select></div>
+        <div class="fg"><label>Class</label><select id="fs_class">${_classes.map(c=>`<option value="${c.id}">${c.name}</option>`).join('')}</select></div>
+      </div>
+      <div class="row2">
+        <div class="fg"><label>Fee Label</label><input id="fs_label" placeholder="e.g. School Fees"></div>
+        <div class="fg"><label>Amount (${_currency})</label><input type="number" id="fs_amount" placeholder="0.00"></div>
+      </div>
+      <div id="fsAlert"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-primary" style="width:auto;padding:10px 20px" onclick="addFeeStructure()">Add Fee Item</button>
+        <button class="btn btn-blue btn-sm" style="padding:10px 16px" onclick="viewFeeStructures()">View Structures</button>
+      </div>
+    </div>
+    <div id="feeStructureList"></div>
+    <hr class="divider">
+    <div class="section" style="border:2px solid #1a237e">
+      <h3>💳 Payments — Class Summary</h3>
+      <div class="row2">
+        <div class="fg"><label>Term</label><select id="fp_term">${_terms.map(t=>`<option value="${t.id}">${t.name}</option>`).join('')}</select></div>
+        <div class="fg"><label>Class</label><select id="fp_class">${_classes.map(c=>`<option value="${c.id}">${c.name}</option>`).join('')}</select></div>
+      </div>
+      <button class="btn btn-primary" style="width:auto;padding:10px 20px" onclick="viewClassFees()">View Payments</button>
+    </div>
+    <div id="feePayList"></div>`;
+}
+
+async function addFeeStructure(){
+  const r=await api('/api/fees/structures',{method:'POST',body:JSON.stringify({
+    term_id:document.getElementById('fs_term').value,
+    class_id:document.getElementById('fs_class').value,
+    label:document.getElementById('fs_label').value,
+    amount:document.getElementById('fs_amount').value
+  })});
+  const d=await r.json();
+  showAlert('fsAlert',d.error?'error':'success',d.error||d.message);
+  if(!d.error){document.getElementById('fs_label').value='';document.getElementById('fs_amount').value='';viewFeeStructures();}
+}
+
+async function viewFeeStructures(){
+  const tid=document.getElementById('fs_term').value;
+  const cid=document.getElementById('fs_class').value;
+  const data=await api(`/api/fees/structures?term_id=${tid}&class_id=${cid}`).then(r=>r.json());
+  document.getElementById('feeStructureList').innerHTML=`<div class="section"><h3>Fee Items</h3>
+    ${data.length?`<table><thead><tr><th>Label</th><th>Amount</th><th>Action</th></tr></thead>
+    <tbody>${data.map(f=>`<tr><td>${f.label}</td><td><b>${_currency}${Number(f.amount).toLocaleString()}</b></td>
+      <td><button class="btn-sm btn-red" onclick="delFeeStruct(${f.id})">Delete</button></td></tr>`).join('')}
+    </tbody></table>`:'<p style="color:#999">No fee items for this class/term.</p>'}
+  </div>`;
+}
+
+async function delFeeStruct(id){
+  if(!confirm('Delete this fee item?'))return;
+  await api('/api/fees/structures/'+id,{method:'DELETE'});viewFeeStructures();
+}
+
+async function viewClassFees(){
+  const tid=document.getElementById('fp_term').value;
+  const cid=document.getElementById('fp_class').value;
+  const [data,structs]=await Promise.all([
+    api(`/api/fees/class-summary?term_id=${tid}&class_id=${cid}`).then(r=>r.json()),
+    api(`/api/fees/structures?term_id=${tid}&class_id=${cid}`).then(r=>r.json())
+  ]);
+  _feeStructures=structs;
+  document.getElementById('feePayList').innerHTML=`<div class="section"><h3>Payment Summary</h3>
+    ${data.length?`<table><thead><tr><th>Student</th><th>Total Fee</th><th>Paid</th><th>Balance</th><th>Status</th><th>Action</th></tr></thead>
+    <tbody>${data.map(s=>`<tr>
+      <td><b>${s.full_name}</b><br><small>${s.admission_number}</small></td>
+      <td>${_currency}${Number(s.totalFee).toLocaleString()}</td>
+      <td>${_currency}${Number(s.paid).toLocaleString()}</td>
+      <td><b>${_currency}${Number(s.balance).toLocaleString()}</b></td>
+      <td><span class="badge badge-${s.status}">${s.status}</span></td>
+      <td><div class="action-btns">
+        <button class="btn-sm btn-green" onclick="openPayModal(${s.id},'${s.full_name.replace(/'/g,"\\'")}')">+ Pay</button>
+        <button class="btn-sm btn-blue" onclick="printReceipt(${s.id},'${s.full_name.replace(/'/g,"\\'")}','${tid}')">Receipt</button>
+      </div></td></tr>`).join('')}
+    </tbody></table>`:'<p style="color:#999">No students or no fee structure set for this class/term.</p>'}
+  </div>`;
+}
+
+function openPayModal(sid,name){
+  _payStudentId=sid;
+  document.getElementById('pm_student').value=name;
+  document.getElementById('pm_fee').innerHTML=_feeStructures.map(f=>`<option value="${f.id}">${f.label} — ${_currency}${Number(f.amount).toLocaleString()}</option>`).join('');
+  document.getElementById('pm_date').value=new Date().toISOString().split('T')[0];
+  document.getElementById('pm_amount').value='';
+  document.getElementById('pm_note').value='';
+  document.getElementById('pm_receipt').value='';
+  document.getElementById('pmAlert').innerHTML='';
+  document.getElementById('paymentModal').classList.add('show');
+}
+
+async function savePay(){
+  const r=await api('/api/fees/payments',{method:'POST',body:JSON.stringify({
+    student_id:_payStudentId,
+    fee_structure_id:document.getElementById('pm_fee').value,
+    amount_paid:document.getElementById('pm_amount').value,
+    payment_date:document.getElementById('pm_date').value,
+    payment_method:document.getElementById('pm_method').value,
+    receipt_number:document.getElementById('pm_receipt').value,
+    note:document.getElementById('pm_note').value
+  })});
+  const d=await r.json();
+  showAlert('pmAlert',d.error?'error':'success',d.error||d.message);
+  if(!d.error){setTimeout(()=>{closeModal('paymentModal');viewClassFees();},1200);}
+}
+
+async function printReceipt(sid,name,tid){
+  const d=await api(`/api/fees/student-balance/${sid}?term_id=${tid}`).then(r=>r.json());
+  const settings=await api('/api/admin/settings').then(r=>r.json());
+  const w=window.open('','_blank','width=500,height=700');
+  const payments=await api(`/api/fees/payments?student_id=${sid}&term_id=${tid}`).then(r=>r.json());
+  w.document.write(`<!DOCTYPE html><body style="font-family:sans-serif;padding:24px;max-width:480px;margin:0 auto">
+    <div style="text-align:center;border-bottom:2px solid #4a0080;padding-bottom:14px;margin-bottom:14px">
+      <img src="/images/logo.jpeg" style="width:60px;height:60px;border-radius:50%;object-fit:cover;border:2px solid #f5c800">
+      <h2 style="color:#4a0080;margin:6px 0 2px;font-size:1.1em">${settings.school_name||'Unto Others International School'}</h2>
+      <p style="color:#888;font-size:0.8em;margin:0">${settings.school_motto||'Faith and Righteousness'}</p>
+      <h3 style="margin:10px 0 0;font-size:1em">FEE PAYMENT RECEIPT</h3>
+    </div>
+    <table style="width:100%;font-size:0.88em;margin-bottom:14px">
+      <tr><td><b>Student:</b></td><td>${d.student.full_name}</td></tr>
+      <tr><td><b>Admission:</b></td><td>${d.student.admission_number}</td></tr>
+      <tr><td><b>Class:</b></td><td>${d.student.class_name}</td></tr>
+    </table>
+    <table style="width:100%;border-collapse:collapse;font-size:0.85em;margin-bottom:14px">
+      <thead><tr style="background:#4a0080;color:white"><th style="padding:7px;text-align:left">Date</th><th style="padding:7px;text-align:left">Item</th><th style="padding:7px;text-align:left">Method</th><th style="padding:7px;text-align:right">Amount</th></tr></thead>
+      <tbody>${payments.map(p=>`<tr style="border-bottom:1px solid #eee"><td style="padding:6px">${p.payment_date}</td><td style="padding:6px">${p.label}</td><td style="padding:6px">${p.payment_method}</td><td style="padding:6px;text-align:right">${_currency}${Number(p.amount_paid).toLocaleString()}</td></tr>`).join('')}</tbody>
+    </table>
+    <div style="background:#f8f5ff;border-radius:8px;padding:12px;font-size:0.88em">
+      <div style="display:flex;justify-content:space-between"><span>Total Fee:</span><b>${_currency}${Number(d.totalFee).toLocaleString()}</b></div>
+      <div style="display:flex;justify-content:space-between"><span>Total Paid:</span><b style="color:#2e7d32">${_currency}${Number(d.totalPaid).toLocaleString()}</b></div>
+      <div style="display:flex;justify-content:space-between;border-top:1px solid #ddd;margin-top:6px;padding-top:6px"><span>Balance:</span><b style="color:${d.balance>0?'#c62828':'#2e7d32'}">${_currency}${Number(d.balance).toLocaleString()}</b></div>
+    </div>
+    <p style="text-align:center;color:#888;font-size:0.78em;margin-top:16px">Printed: ${new Date().toLocaleDateString()}</p>
+    <button onclick="window.print()" style="width:100%;padding:10px;background:#4a0080;color:white;border:none;border-radius:8px;cursor:pointer;margin-top:8px;font-size:1em">🖨️ Print Receipt</button>
+  `);
+}
+// ── GRADES ────────────────────────────────────────────────
+async function loadGrades(){
+  document.getElementById('tab-grades').innerHTML=`
+    <div class="section section-border">
+      <h3>📚 Manage Subjects</h3>
+      <p style="color:#666;font-size:0.82em;margin-bottom:12px">Add subjects per class. Teachers use these to enter grades.</p>
+      <div class="row2">
+        <div class="fg"><label>Class</label><select id="sub_class" onchange="loadSubjectList()">${_classes.map(c=>`<option value="${c.id}">${c.name}</option>`).join('')}</select></div>
+        <div class="fg"><label>Subject Name</label><input id="sub_name" placeholder="e.g. Mathematics" onkeydown="if(event.key==='Enter')addSubject()"></div>
+      </div>
+      <div id="subAlert"></div>
+      <button class="btn btn-primary" style="width:auto;padding:10px 20px" onclick="addSubject()">➕ Add Subject</button>
+    </div>
+    <div id="subjectList"></div>
+    <hr class="divider">
+    <div class="section" style="border:2px solid #1a237e">
+      <h3>📝 View Grades</h3>
+      <div class="row2">
+        <div class="fg"><label>Term</label><select id="gr_term">${_terms.map(t=>`<option value="${t.id}">${t.name}</option>`).join('')}</select></div>
+        <div class="fg"><label>Class</label><select id="gr_class" onchange="loadGradeSubjects()">${_classes.map(c=>`<option value="${c.id}">${c.name}</option>`).join('')}</select></div>
+      </div>
+      <div class="fg"><label>Subject</label><select id="gr_subject"><option value="">-- Select class first --</option></select></div>
+      <button class="btn btn-primary" style="width:auto;padding:10px 20px" onclick="fetchGrades()">View Grades</button>
+    </div>
+    <div id="gradesView"></div>`;
+  loadSubjectList();
+  loadGradeSubjects();
+}
+
+async function addSubject(){
+  const name=document.getElementById('sub_name').value.trim();
+  const cid=document.getElementById('sub_class').value;
+  if(!name){showAlert('subAlert','error','Enter subject name');return;}
+  const r=await api('/api/grades/subjects',{method:'POST',body:JSON.stringify({name,class_id:cid})});
+  const d=await r.json();
+  showAlert('subAlert',d.error?'error':'success',d.error||d.message);
+  if(!d.error){document.getElementById('sub_name').value='';loadSubjectList();}
+}
+
+async function loadSubjectList(){
+  const cid=document.getElementById('sub_class')?.value;
+  if(!cid)return;
+  const data=await api('/api/grades/subjects?class_id='+cid).then(r=>r.json());
+  const el=document.getElementById('subjectList');
+  if(!el)return;
+  el.innerHTML=`<div class="section"><h3>Subjects (${data.length})</h3>
+    ${data.length?`<table><thead><tr><th>Subject</th><th>Action</th></tr></thead>
+    <tbody>${data.map(s=>`<tr><td><b>${s.name}</b></td>
+      <td><button class="btn-sm btn-red" onclick="delSubject(${s.id})">Delete</button></td></tr>`).join('')}
+    </tbody></table>`:'<p style="color:#999">No subjects yet. Add one above.</p>'}
+  </div>`;
+}
+
+async function delSubject(id){
+  if(!confirm('Delete subject and all its grades?'))return;
+  await api('/api/grades/subjects/'+id,{method:'DELETE'});
+  loadSubjectList();
+}
+
+async function loadGradeSubjects(){
+  const el=document.getElementById('gr_class');
+  const sel=document.getElementById('gr_subject');
+  if(!el||!sel)return;
+  const data=await api('/api/grades/subjects?class_id='+el.value).then(r=>r.json());
+  sel.innerHTML=data.length?data.map(s=>`<option value="${s.id}">${s.name}</option>`).join(''):'<option value="">No subjects for this class</option>';
+}
+
+async function fetchGrades(){
+  const tid=document.getElementById('gr_term').value;
+  const cid=document.getElementById('gr_class').value;
+  const sid=document.getElementById('gr_subject').value;
+  if(!sid){alert('Select a subject');return;}
+  const data=await api(`/api/grades/class?class_id=${cid}&term_id=${tid}&subject_id=${sid}`).then(r=>r.json());
+  document.getElementById('gradesView').innerHTML=`<div class="section"><h3>Grade Results</h3>
+    ${data.length?`<table><thead><tr><th>Student</th><th>CA1</th><th>CA2</th><th>Exam</th><th>Total</th><th>Grade</th><th>Remark</th></tr></thead>
+    <tbody>${data.map(g=>`<tr>
+      <td><b>${g.full_name}</b></td><td>${g.ca1}</td><td>${g.ca2}</td><td>${g.exam}</td>
+      <td><b>${g.total}</b></td>
+      <td><b style="color:${g.grade==='A'?'#2e7d32':g.grade==='F'?'#c62828':'#555'}">${g.grade}</b></td>
+      <td>${g.remark}</td></tr>`).join('')}
+    </tbody></table>`:'<p style="color:#999">No grades entered yet.</p>'}
+  </div>`;
+}
+
+// ── TIMETABLE ─────────────────────────────────────────────
+async function loadTimetable(){
+  const teachers=await api('/api/admin/teachers').then(r=>r.json());
+  document.getElementById('tab-timetable').innerHTML=`
+    <div class="section section-border">
+      <h3>➕ Add Timetable Entry</h3>
+      <p style="color:#666;font-size:0.82em;margin-bottom:12px">Add as many periods as needed. Switch class to add more.</p>
+      <div class="row2">
+        <div class="fg"><label>Class</label><select id="tt_class" onchange="fetchTimetable()">${_classes.map(c=>`<option value="${c.id}">${c.name}</option>`).join('')}</select></div>
+        <div class="fg"><label>Day</label><select id="tt_day" onchange="fetchTimetable()"><option>Monday</option><option>Tuesday</option><option>Wednesday</option><option>Thursday</option><option>Friday</option></select></div>
+      </div>
+      <div class="row2">
+        <div class="fg"><label>Period No.</label><input type="number" id="tt_period" min="1" max="15" value="1"></div>
+        <div class="fg"><label>Subject</label><input id="tt_subject" placeholder="e.g. Mathematics"></div>
+      </div>
+      <div class="row2">
+        <div class="fg"><label>Start Time</label><input type="time" id="tt_start"></div>
+        <div class="fg"><label>End Time</label><input type="time" id="tt_end"></div>
+      </div>
+      <div class="fg"><label>Teacher (optional)</label><select id="tt_teacher"><option value="">-- None --</option>${teachers.map(t=>`<option value="${t.id}">${t.full_name}</option>`).join('')}</select></div>
+      <div id="ttAlert"></div>
+      <button class="btn btn-primary" style="width:auto;padding:10px 20px" onclick="addTimetable()">➕ Save Entry</button>
+    </div>
+    <div class="section">
+      <div class="flex-between" style="margin-bottom:10px">
+        <h3>📅 Current Timetable</h3>
+        <button class="btn-sm btn-gold" onclick="printTimetable()">🖨️ Print</button>
+      </div>
+      <div id="ttView"></div>
+    </div>`;
+  fetchTimetable();
+}
+
+async function addTimetable(){
+  const r=await api('/api/timetable',{method:'POST',body:JSON.stringify({
+    class_id:document.getElementById('tt_class').value,
+    day:document.getElementById('tt_day').value,
+    period:document.getElementById('tt_period').value,
+    subject:document.getElementById('tt_subject').value,
+    start_time:document.getElementById('tt_start').value,
+    end_time:document.getElementById('tt_end').value,
+    teacher_id:document.getElementById('tt_teacher').value||null
+  })});
+  const d=await r.json();
+  showAlert('ttAlert',d.error?'error':'success',d.error||d.message);
+  if(!d.error){
+    document.getElementById('tt_subject').value='';
+    document.getElementById('tt_start').value='';
+    document.getElementById('tt_end').value='';
+    const p=document.getElementById('tt_period');
+    p.value=parseInt(p.value)+1;
+    fetchTimetable();
+  }
+}
+
+async function fetchTimetable(){
+  const cid=document.getElementById('tt_class')?.value;
+  if(!cid)return;
+  const data=await api('/api/timetable?class_id='+cid).then(r=>r.json());
+  const days=['Monday','Tuesday','Wednesday','Thursday','Friday'];
+  const byDay={};days.forEach(d=>byDay[d]=[]);
+  data.forEach(e=>{if(byDay[e.day])byDay[e.day].push(e);});
+  const cname=_classes.find(c=>c.id==cid)?.name||'';
+  document.getElementById('ttView').innerHTML=`
+    <p style="color:#666;font-size:0.82em;margin-bottom:10px">Class: <b>${cname}</b></p>
+    ${days.map(day=>`
+      <div style="margin-bottom:12px">
+        <div style="color:#4a0080;font-weight:700;font-size:0.88em;margin-bottom:6px;padding:4px 0;border-bottom:1px solid #eee">${day}</div>
+        ${byDay[day].length?`<table><thead><tr><th>P</th><th>Subject</th><th>Time</th><th>Teacher</th><th>Del</th></tr></thead>
+        <tbody>${byDay[day].map(e=>`<tr>
+          <td><b>P${e.period}</b></td><td>${e.subject}</td>
+          <td style="white-space:nowrap">${e.start_time||''}${e.end_time?' - '+e.end_time:''}</td>
+          <td>${e.teacher_name||'-'}</td>
+          <td><button class="btn-sm btn-red" onclick="delTimetable(${e.id})">Del</button></td>
+        </tr>`).join('')}</tbody></table>`
+        :'<p style="color:#bbb;font-size:0.82em;padding:4px 0">No entries</p>'}
+      </div>`).join('')}`;
+}
+
+async function delTimetable(id){
+  await api('/api/timetable/'+id,{method:'DELETE'});fetchTimetable();
+}
+
+function printTimetable(){
+  const cid=document.getElementById('tt_class')?.value;
+  const cname=_classes.find(c=>c.id==cid)?.name||'';
+  const content=document.getElementById('ttView').innerHTML;
+  const w=window.open('','_blank');
+  w.document.write(`<!DOCTYPE html><head><style>
+    body{font-family:sans-serif;padding:20px;} table{width:100%;border-collapse:collapse;margin-bottom:16px;}
+    th{background:#4a0080;color:white;padding:7px;text-align:left;font-size:0.85em;}
+    td{padding:7px;border-bottom:1px solid #eee;font-size:0.85em;}
+    h2{color:#4a0080;} h3{color:#1a237e;margin:12px 0 6px;}
+  </style></head>
+    <h2>Unto Others International School</h2>
+    <h3>Timetable — ${cname}</h3>
+    ${content}
+    <button onclick="window.print()" style="padding:10px 24px;background:#4a0080;color:white;border:none;border-radius:8px;cursor:pointer;margin-top:12px">🖨️ Print</button>
+  `);
+}
+
+// ── REPORTS ───────────────────────────────────────────────
+async function loadReports(){
+  document.getElementById('tab-reports').innerHTML=`
+    <div class="section section-border">
+      <h3>📊 Student Report Card</h3>
+      <div class="row2">
+        <div class="fg"><label>Term</label><select id="rc_term">${_terms.map(t=>`<option value="${t.id}">${t.name}</option>`).join('')}</select></div>
+        <div class="fg"><label>Class</label><select id="rc_class" onchange="loadRCStudents()">${_classes.map(c=>`<option value="${c.id}">${c.name}</option>`).join('')}</select></div>
+      </div>
+      <div class="fg"><label>Student</label><select id="rc_student"><option value="">-- Select class first --</option></select></div>
+      <button class="btn btn-primary" style="width:auto;padding:10px 20px" onclick="showReportCard()">Generate Report Card</button>
+    </div>
+    <div id="reportCardView"></div>
+    <hr class="divider">
+    <div class="section" style="border:2px solid #1a237e">
+      <h3>📋 Class Result Sheet</h3>
+      <div class="row2">
+        <div class="fg"><label>Term</label><select id="cr_term">${_terms.map(t=>`<option value="${t.id}">${t.name}</option>`).join('')}</select></div>
+        <div class="fg"><label>Class</label><select id="cr_class">${_classes.map(c=>`<option value="${c.id}">${c.name}</option>`).join('')}</select></div>
+      </div>
+      <button class="btn btn-primary" style="width:auto;padding:10px 20px" onclick="showClassResult()">View Result Sheet</button>
+    </div>
+    <div id="classResultView"></div>
+    <hr class="divider">
+    <div class="section" style="border:2px solid #00796b">
+      <h3>🖨️ Print ID Cards</h3>
+      <div class="fg"><label>Class</label><select id="qr_class">${_classes.map(c=>`<option value="${c.id}">${c.name}</option>`).join('')}</select></div>
+      <button class="btn btn-teal btn-sm" style="padding:10px 20px" onclick="generateIDCards()">Generate ID Cards</button>
+    </div>
+    <div id="idCardsView"></div>
+    <hr class="divider">
+    <div class="section" style="border:2px solid #757575">
+      <h3>⬇️ Export Attendance CSV</h3>
+      <div class="row2">
+        <div class="fg"><label>From Date</label><input type="date" id="exp_from"></div>
+        <div class="fg"><label>To Date</label><input type="date" id="exp_to"></div>
+      </div>
+      <div class="fg"><label>Class (optional)</label><select id="exp_class"><option value="">All Classes</option>${_classes.map(c=>`<option value="${c.id}">${c.name}</option>`).join('')}</select></div>
+      <button class="btn btn-grey btn-sm" style="padding:10px 20px" onclick="exportCSV()">⬇️ Download CSV</button>
+    </div>`;
+}
+
+async function loadRCStudents(){
+  const cid=document.getElementById('rc_class').value;
+  const data=await api('/api/admin/students?class_id='+cid).then(r=>r.json());
+  document.getElementById('rc_student').innerHTML=data.map(s=>`<option value="${s.id}">${s.full_name}</option>`).join('');
+}
+
+async function showReportCard(){
+  const sid=document.getElementById('rc_student').value;
+  const tid=document.getElementById('rc_term').value;
+
+  if(!sid||!tid){
+    alert('Select term and student');
+    return;
+  }
+
+  const d=await api(`/api/grades/report-card/${sid}?term_id=${tid}`).then(r=>r.json());
+
+  const attRate=d.attendance?.total
+    ? Math.round((d.attendance.present/d.attendance.total)*100)
+    : 0;
+
+  const html=`
+  <div class="section" id="rcPrint">
+    <div style="text-align:center;border-bottom:2px solid #4a0080;padding-bottom:14px;margin-bottom:14px">
+      <img src="/images/logo.jpeg" style="width:70px;height:70px;border-radius:50%;object-fit:cover;border:3px solid #f5c800" onerror="this.style.display='none'">
+      <h2 style="color:#4a0080;margin:8px 0 2px;font-size:1.1em">${d.settings?.school_name||'School'}</h2>
+      <p style="color:#888;font-size:0.8em;margin:0">${d.settings?.school_motto||''}</p>
+      <h3 style="margin:10px 0 2px;font-size:1em">STUDENT REPORT CARD</h3>
+      <p style="color:#666;font-size:0.85em">${d.term?.name||''}</p>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;font-size:0.87em">
+      <div><b>Name:</b> ${d.student.full_name}</div>
+      <div><b>Adm No:</b> ${d.student.admission_number}</div>
+      <div><b>Class:</b> ${d.student.class_name}</div>
+      <div><b>Attendance:</b> ${d.attendance?.present||0}/${d.attendance?.total||0} (${attRate}%)</div>
+    </div>
+
+    <table style="width:100%;margin-bottom:14px" border="1" cellspacing="0">
+      <thead>
+        <tr>
+          <th>Subject</th><th>CA1</th><th>CA2</th><th>Exam</th><th>Total</th><th>Grade</th><th>Remark</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${d.grades.map(g=>`
+          <tr>
+            <td>${g.subject_name}</td>
+            <td>${g.ca1}</td>
+            <td>${g.ca2}</td>
+            <td>${g.exam}</td>
+            <td><b>${g.total}</b></td>
+            <td><b>${g.grade}</b></td>
+            <td>${g.remark}</td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center;background:#f8f5ff;padding:12px;border-radius:8px">
+      <div>
+        <div style="font-size:1.5em;font-weight:bold">${d.average}</div>
+        <div>Average</div>
+      </div>
+      <div>
+        <div style="font-size:1.5em;font-weight:bold">${d.overallGrade}</div>
+        <div>Grade</div>
+      </div>
+      <div>
+        <div style="font-size:1em;font-weight:bold">${d.overallRemark}</div>
+        <div>Remark</div>
+      </div>
+    </div>
+
+    <div style="margin-top:18px;border-top:2px dashed #ccc;padding-top:14px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px">
+        <div>
+          <b>Class Teacher Comment</b>
+          <div style="min-height:60px;border:1px solid #ccc;padding:10px;background:#fafafa">
+            ${d.overallRemark || 'Good performance'}
+          </div>
+        </div>
+
+        <div>
+          <b>Headmaster Comment</b>
+          <div style="min-height:60px;border:1px solid #ccc;padding:10px;background:#fafafa">
+            Keep working hard and maintain discipline.
+          </div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:30px;text-align:center;margin-top:30px">
+        <div style="border-top:1px solid #000;padding-top:6px">Class Teacher Signature</div>
+        <div style="border-top:1px solid #000;padding-top:6px">Headmaster Signature</div>
+      </div>
+    </div>
+
+    <div style="margin-top:20px" class="no-print">
+      <button onclick="window.print()">Print Report Card</button>
+    </div>
+  </div>
+  `;
+
+  document.getElementById('reportCardView').innerHTML = html;
+}
+
+async function generateIDCards(){
+  const cid=document.getElementById('qr_class').value;
+  const cname=_classes.find(c=>c.id==cid)?.name||'';
+  document.getElementById('idCardsView').innerHTML='<div class="section"><p style="text-align:center;color:#666">⏳ Generating...</p></div>';
+  const students=await api('/api/admin/students?class_id='+cid).then(r=>r.json());
+  if(!students.length){document.getElementById('idCardsView').innerHTML='<div class="section"><p style="color:#e53935">No students in this class.</p></div>';return;}
+  const qrData=await Promise.all(students.map(s=>api('/api/students/'+s.id+'/qr').then(r=>r.json())));
+  document.getElementById('idCardsView').innerHTML=`
+    <div class="section no-print flex-between" style="margin-bottom:10px">
+      <h3>✅ ${students.length} ID Cards — ${cname}</h3>
+      <button class="btn-sm btn-purple" onclick="window.print()">🖨️ Print All</button>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px" id="idGrid">
+      ${qrData.map(d=>`<div style="border:2px dashed #ccc;border-radius:10px;padding:12px;text-align:center;background:white;page-break-inside:avoid">
+        <img src="/images/logo.jpeg" style="width:45px;height:45px;border-radius:50%;border:2px solid #f5c800;object-fit:cover" onerror="this.style.display='none'">
+        <div style="font-weight:700;font-size:0.75em;color:#4a0080;margin:4px 0">Unto Others International School</div>
+        <img src="${d.qr}" style="width:110px;height:110px;margin:4px 0">
+        <div style="font-weight:700;font-size:0.82em">${d.student.full_name}</div>
+        <div style="font-size:0.72em;color:#555">Adm: ${d.student.admission_number}</div>
+        <div style="font-size:0.72em;color:#4a0080;font-weight:600">${cname}</div>
+      </div>`).join('')}
+    </div>`;
+}
+
+function exportCSV(){
+  const from=document.getElementById('exp_from').value;
+  const to=document.getElementById('exp_to').value;
+  const cls=document.getElementById('exp_class').value;
+  let url='/api/admin/attendance/export?token='+token;
+  if(from)url+='&from='+from;
+  if(to)url+='&to='+to;
+  if(cls)url+='&class_id='+cls;
+  window.open(url,'_blank');
+}
+
+// ── NOTICES ───────────────────────────────────────────────
+async function loadNotices(){
+  const notices=await api('/api/admin/notices').then(r=>r.json());
+  document.getElementById('tab-notices').innerHTML=`
+    <div class="section section-border">
+      <h3>📢 Post New Notice</h3>
+      <div class="fg"><label>Title</label><input id="not_title" placeholder="Notice title"></div>
+      <div class="fg"><label>Message</label><textarea id="not_body" placeholder="Notice message..."></textarea></div>
+      <div class="fg"><label>Target</label><select id="not_target"><option value="all">Everyone</option><option value="teachers">Teachers Only</option></select></div>
+      <div id="notAlert"></div>
+      <button class="btn btn-primary" style="width:auto;padding:10px 20px" onclick="postNotice()">Post Notice</button>
+    </div>
+    <div class="section">
+      <h3>📋 All Notices (${notices.length})</h3>
+      ${notices.length?notices.map(n=>`
+        <div style="background:#f8f5ff;border-left:4px solid #4a0080;border-radius:8px;padding:12px;margin-bottom:10px">
+          <div class="flex-between">
+            <div><b>${n.title}</b> <span class="tag">${n.target}</span></div>
+            <button class="btn-sm btn-red" onclick="delNotice(${n.id})">Del</button>
+          </div>
+          <p style="color:#555;font-size:0.85em;margin-top:6px">${n.body}</p>
+          <small style="color:#999">${new Date(n.created_at).toLocaleDateString()}</small>
+        </div>`).join('')
+      :'<p style="color:#999">No notices yet.</p>'}
+    </div>`;
+}
+
+async function postNotice(){
+  const r=await api('/api/admin/notices',{method:'POST',body:JSON.stringify({title:document.getElementById('not_title').value,body:document.getElementById('not_body').value,target:document.getElementById('not_target').value})});
+  const d=await r.json();
+  showAlert('notAlert',d.error?'error':'success',d.error||d.message);
+  if(!d.error){document.getElementById('not_title').value='';document.getElementById('not_body').value='';loadNotices();}
+}
+
+async function delNotice(id){
+  if(!confirm('Delete notice?'))return;
+  await api('/api/admin/notices/'+id,{method:'DELETE'});loadNotices();
+}
+
+// ── TERMS ─────────────────────────────────────────────────
+async function loadTerms(){
+  const [terms,current]=await Promise.all([api('/api/admin/terms').then(r=>r.json()),api('/api/admin/current-term').then(r=>r.json())]);
+  document.getElementById('tab-terms').innerHTML=`
+    <div style="background:white;border:2px solid #4a0080;border-radius:12px;padding:20px;margin-bottom:14px;text-align:center">
+      <div style="font-size:1.4em;font-weight:700;color:#4a0080">📅 ${current?.name||'No Term'}</div>
+      <div style="color:#888;font-size:0.85em;margin-top:4px">Current Term</div>
+    </div>
+    <div class="section section-border">
+      <h3>🆕 Start New Term</h3>
+<p style="color:#888;font-size:0.82em;margin-bottom:12px">⚠️ This will delete ALL attendance records. Export reports first.</p>
+      <div class="fg"><label>Term Name</label><input id="nt_name" placeholder="e.g. Second Term 2025/2026"></div>
+      <div class="row2">
+        <div class="fg"><label>Start Date</label><input type="date" id="nt_start"></div>
+        <div class="fg"><label>End Date</label><input type="date" id="nt_end"></div>
+      </div>
+      <div id="termAlert"></div>
+      <button class="btn btn-primary" style="background:linear-gradient(135deg,#e53935,#b71c1c);width:auto;padding:10px 20px" onclick="startNewTerm()">🔄 Start New Term</button>
+    </div>
+    <div class="section"><h3>📜 Term History</h3>
+      ${terms.map((t,i)=>`<div style="background:#f8f9ff;border-radius:8px;padding:10px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center">
+        <div><b>${t.name}</b><br><small style="color:#999">${t.start_date||''} ${t.end_date?'→ '+t.end_date:''}</small></div>
+<div style="display:flex;gap:8px;align-items:center">
+  ${t.is_current
+    ? '<span class="badge badge-present">Current</span>'
+    : `
+      <span class="badge" style="background:#f5f5f5;color:#999">Past</span>
+      <button
+        onclick="deleteTerm(${t.id})"
+        style="background:#e53935;color:white;border:none;padding:6px 10px;border-radius:6px;cursor:pointer"
+      >
+        Delete
+      </button>
+    `
+  }
+</div>
+      </div>`).join('')}
+    </div>`;
+}
+
+async function startNewTerm(){
+  const name=document.getElementById('nt_name').value.trim();
+  if(!name){showAlert('termAlert','error','Enter term name');return;}
+  if(!confirm(`Start "${name}"?\n\nALL attendance records will be DELETED.\nExport your reports first!`))return;
+  if(!confirm('Are you 100% sure? This cannot be undone.'))return;
+  const r=await api('/api/admin/terms',{method:'POST',body:JSON.stringify({name,start_date:document.getElementById('nt_start').value,end_date:document.getElementById('nt_end').value,confirmed:true})});
+  const d=await r.json();
+  showAlert('termAlert',d.error?'error':'success',d.error||d.message);
+  if(!d.error){init();setTimeout(loadTerms,800);}
+}
+
+async function deleteTerm(id){
+  if(!confirm('Delete this term?')) return;
+
+  const r = await api('/api/admin/terms/' + id, {
+    method:'DELETE'
+  });
+
+  const d = await r.json();
+
+  if(d.error){
+    alert(d.error);
+  } else {
+    alert('Term deleted');
+    loadTerms();
+  }
+}
+
+// ── SETTINGS ──────────────────────────────────────────────
+async function loadSettings(){
+  const d=await api('/api/admin/settings').then(r=>r.json());
+  document.getElementById('tab-settings').innerHTML=`
+    <div class="section section-border">
+      <h3>🏫 School Information</h3>
+      <div class="fg"><label>School Name</label><input id="set_name" value="${d.school_name||''}"></div>
+      <div class="fg"><label>Motto</label><input id="set_motto" value="${d.school_motto||''}"></div>
+      <div class="row2">
+        <div class="fg"><label>Phone</label><input id="set_phone" value="${d.school_phone||''}"></div>
+        <div class="fg"><label>Email</label><input id="set_email" value="${d.school_email||''}"></div>
+      </div>
+      <div class="fg"><label>Address</label><input id="set_address" value="${d.school_address||''}"></div>
+      <div class="fg"><label>Currency Symbol</label><input id="set_currency" value="${d.currency_symbol||'GH₵'}"></div>
+      <div id="setAlert"></div>
+      <button class="btn btn-primary" style="width:auto;padding:10px 20px" onclick="saveSettings()">💾 Save Settings</button>
+    </div>
+    <div class="section" style="border:2px solid #1a237e">
+      <h3>⏰ Auto-Absent Settings</h3>
+      <div class="fg"><label>Auto-Absent Time (24h)</label><input type="time" id="set_time" value="${d.auto_absent_time||'15:00'}"></div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+        <input type="checkbox" id="set_enabled" ${d.auto_absent_enabled?'checked':''} style="width:18px;height:18px;cursor:pointer">
+        <label for="set_enabled" style="cursor:pointer;font-weight:600">Enable auto-absent at set time</label>
+      </div>
+      <button class="btn btn-orange btn-sm" style="padding:10px 20px" onclick="triggerAutoAbsent()">Mark All Unmarked Absent Now</button>
+      <div id="triggerResult" style="margin-top:10px"></div>
+    </div>
+    <div class="section" style="border:2px solid #4a0080">
+      <h3>🔐 Change Admin Password</h3>
+      <div class="fg"><label>Current Password</label><input type="password" id="ap_old" placeholder="Current password"></div>
+      <div class="fg"><label>New Password (min 6)</label><input type="password" id="ap_new" placeholder="New password"></div>
+      <div class="fg"><label>Confirm</label><input type="password" id="ap_conf" placeholder="Confirm new password"></div>
+      <div id="apAlert"></div>
+      <button class="btn btn-primary" style="width:auto;padding:10px 20px" onclick="changeAdminPw()">Change Password</button>
+    </div>`;
+}
+
+async function saveSettings(){
+  const r=await api('/api/admin/settings',{method:'PUT',body:JSON.stringify({
+    school_name:document.getElementById('set_name').value,
+    school_motto:document.getElementById('set_motto').value,
+    school_phone:document.getElementById('set_phone').value,
+    school_email:document.getElementById('set_email').value,
+    school_address:document.getElementById('set_address').value,
+    currency_symbol:document.getElementById('set_currency').value,
+    auto_absent_time:document.getElementById('set_time').value,
+    auto_absent_enabled:document.getElementById('set_enabled').checked
+  })});
+  const d=await r.json();
+  showAlert('setAlert',d.error?'error':'success',d.error||d.message);
+  if(!d.error){_currency=document.getElementById('set_currency').value;}
+}
+
+async function triggerAutoAbsent(){
+  if(!confirm('Mark ALL unmarked students absent today?'))return;
+  const d=await api('/api/admin/auto-absent',{method:'POST'}).then(r=>r.json());
+  document.getElementById('triggerResult').innerHTML=`<div class="alert alert-success">✅ ${d.message}</div>`;
+}
+
+async function changeAdminPw(){
+  const op=document.getElementById('ap_old').value;
+  const np=document.getElementById('ap_new').value;
+  const cp=document.getElementById('ap_conf').value;
+  if(!op||!np||!cp){showAlert('apAlert','error','All fields required');return;}
+  if(np!==cp){showAlert('apAlert','error','Passwords do not match');return;}
+  if(np.length<6){showAlert('apAlert','error','Min 6 characters');return;}
+  const r=await api('/api/auth/admin/change-password',{method:'POST',body:JSON.stringify({oldPassword:op,newPassword:np})});
+  const d=await r.json();
+  showAlert('apAlert',d.error?'error':'success',d.error||d.message);
+  if(!d.error)setTimeout(()=>{localStorage.clear();location.reload();},2000);
+}
+
+
+
+</script>
+
+
+
+</script>
+</body>
+</html>

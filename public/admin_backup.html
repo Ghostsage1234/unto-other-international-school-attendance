@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>School Admin</title>
+
+  <style>
+    body { font-family: Arial; margin:0; padding:0; }
+    #app { display:none; padding:20px; }
+    .nav button { margin:5px; padding:10px; }
+    .tab { display:none; margin-top:20px; }
+  </style>
+</head>
+
+<body>
+
+<!-- LOGIN -->
+<div id="loginWrap">
+  <h2>Admin Login</h2>
+  <input id="loginUser" placeholder="Username"><br><br>
+  <input id="loginPass" type="password" placeholder="Password"><br><br>
+  <button onclick="login()">Login</button>
+  <div id="loginAlert"></div>
+</div>
+
+<!-- APP -->
+<div id="app">
+
+  <h2>School Admin Panel</h2>
+
+  <div class="nav">
+    <button onclick="showTab('dashboard')">Dashboard</button>
+    <button onclick="showTab('students')">Students</button>
+    <button onclick="showTab('teachers')">Teachers</button>
+  </div>
+
+  <div id="dashboard" class="tab"></div>
+  <div id="students" class="tab"></div>
+  <div id="teachers" class="tab"></div>
+
+</div>
+
+<script>
+
+let token = localStorage.getItem('token');
+
+/* SAFE API */
+async function api(url, method='GET', body=null){
+  const opts = {
+    method,
+    headers: { 'Content-Type':'application/json' }
+  };
+
+  if(token) opts.headers.Authorization = token;
+  if(body) opts.body = JSON.stringify(body);
+
+  const res = await fetch(url, opts);
+  return res.json();
+}
+
+/* LOGIN */
+async function login(){
+  const username = loginUser.value;
+  const password = loginPass.value;
+
+  const res = await api('/api/auth/admin/login','POST',{username,password});
+
+  if(res.token){
+    token = res.token;
+    localStorage.setItem('token', token);
+
+    loginWrap.style.display = 'none';
+    app.style.display = 'block';
+
+    showTab('dashboard');
+    loadDashboard();
+  } else {
+    loginAlert.innerText = res.error || 'Login failed';
+  }
+}
+
+/* TAB CONTROL */
+function showTab(name){
+  document.querySelectorAll('.tab').forEach(t => t.style.display='none');
+  document.getElementById(name).style.display='block';
+
+  if(name === 'dashboard') loadDashboard();
+  if(name === 'students') loadStudents();
+  if(name === 'teachers') loadTeachers();
+}
+
+/* DASHBOARD */
+async function loadDashboard(){
+  const d = await api('/api/admin/dashboard');
+
+  dashboard.innerHTML = `
+    <h3>Dashboard</h3>
+    <p>Students: ${d.totalStudents || 0}</p>
+    <p>Teachers: ${d.totalTeachers || 0}</p>
+    <p>Present: ${d.present || 0}</p>
+    <p>Absent: ${d.absent || 0}</p>
+  `;
+}
+
+/* STUDENTS */
+async function loadStudents(){
+  const d = await api('/api/admin/students');
+
+  if(!d.length){
+    students.innerHTML = "<p>No students found</p>";
+    return;
+  }
+
+  students.innerHTML = `
+    <h3>Students</h3>
+    <ul>
+      ${d.map(s => `<li>${s.full_name || s.name}</li>`).join('')}
+    </ul>
+  `;
+}
+
+/* TEACHERS */
+async function loadTeachers(){
+  const d = await api('/api/admin/teachers');
+
+  if(!d.length){
+    teachers.innerHTML = "<p>No teachers found</p>";
+    return;
+  }
+
+  teachers.innerHTML = `
+    <h3>Teachers</h3>
+    <ul>
+      ${d.map(t => `<li>${t.full_name}</li>`).join('')}
+    </ul>
+  `;
+}
+
+</script>
+
+</body>
+</html>
