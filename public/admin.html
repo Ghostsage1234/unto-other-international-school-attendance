@@ -750,16 +750,22 @@ async function savePay(){
 }
 
 async function printReceipt(sid,name,tid){
-  const student=await api('/api/student-balance/'+sid+'?term_Id='+tid).then(r=>r.json());
-  const settings=await api('/api/admin/settings').then(r=>r.json());
-  const payments=await api('/api/fees/payments?student_Id='+sid+'&term_Id='+tid).then(r=>r.json());
+  const bal_data=await api('/api/student-balance/'+sid+'?term_Id='+tid).then(function(r){return r.json();});
+  const settings=await api('/api/admin/settings').then(function(r){return r.json();});
+  const payments=await api('/api/fees/payments?student_Id='+sid+'&term_Id='+tid).then(function(r){return r.json();});
   const rcptNo='RCP-'+tid+'-'+sid+'-'+Date.now().toString().slice(-4);
   const sn=settings.school_name||'Unto Others International School';
   const sm=settings.school_motto||'Faith and Righteousness';
-  const bal=Number(student.d_balance||0);
-  const w=window.open('','_blank','width=640,height=820');
-  const rows=payments.map((p,i)=>'<tr><td>'+(i+1)+'</td><td>'+p.payment_date+'</td><td>'+(p.label||'Fee Payment')+'</td><td>'+(p.payment_method||'-')+'</td><td style="text-align:right"><b>GH&#8373; '+Number(p.amount_paid).toLocaleString('en-GH',{minimumFractionDigits:2})+'</b></td></tr>').join('');
+  const student=bal_data.student||{};
+  const totalFee=Number(bal_data.totalFee||0);
+  const totalPaid=Number(bal_data.totalPaid||0);
+  const balance=Number(bal_data.balance||0);
+  const termName=(_terms&&_terms.find(function(t){return t.id==tid;}))||{};
+  const rows=payments.map(function(p,i){
+    return '<tr><td>'+(i+1)+'</td><td>'+(p.payment_date||'-')+'</td><td>'+(p.label||p.note||'Fee Payment')+'</td><td>'+(p.payment_method||'-')+'</td><td style="text-align:right"><b>GH&#8373; '+Number(p.amount_paid||0).toLocaleString('en-GH',{minimumFractionDigits:2})+'</b></td></tr>';
+  }).join('');
   const noRows='<tr><td colspan="5" style="text-align:center;color:#999;padding:12px">No payments recorded</td></tr>';
+  const w=window.open('','_blank','width=640,height=820');
   w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Fee Receipt</title><style>'
   +'*{margin:0;padding:0;box-sizing:border-box}'
   +'body{font-family:Times New Roman,Times,serif;background:#fff;color:#111;padding:30px;max-width:580px;margin:auto}'
@@ -791,18 +797,18 @@ async function printReceipt(sid,name,tid){
   +'<div class="meta"><span><b>Receipt No:</b> '+rcptNo+'</span>'
   +'<span><b>Date:</b> '+new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'})+'</span></div>'
   +'<div class="sbox">'
-  +'<div><div class="lbl">Student Name</div><div class="val">'+(student.d_student&&student.d_student.full_name||name)+'</div></div>'
-  +'<div><div class="lbl">Adm. Number</div><div class="val">'+(student.d_student&&student.d_student.admission_number||'-')+'</div></div>'
-  +'<div><div class="lbl">Class</div><div class="val">'+(student.d_student&&student.d_student.class_name||'-')+'</div></div>'
-  +'<div><div class="lbl">Term</div><div class="val">'+(student.d_term&&student.d_term.name||'-')+'</div></div>'
+  +'<div><div class="lbl">Student Name</div><div class="val">'+(student.full_name||name)+'</div></div>'
+  +'<div><div class="lbl">Adm. Number</div><div class="val">'+(student.admission_number||'-')+'</div></div>'
+  +'<div><div class="lbl">Class</div><div class="val">'+(student.class_name||'-')+'</div></div>'
+  +'<div><div class="lbl">Term</div><div class="val">'+(termName.name||'-')+'</div></div>'
   +'</div>'
   +'<table><thead><tr><th>#</th><th>Date</th><th>Description</th><th>Method</th><th style="text-align:right">Amount (GH&#8373;)</th></tr></thead>'
   +'<tbody>'+(payments.length?rows:noRows)+'</tbody></table>'
   +'<div class="tbox">'
-  +'<div class="trow"><span>Total Fee Charged:</span><span><b>GH&#8373; '+Number(student.d_totalFee||0).toLocaleString('en-GH',{minimumFractionDigits:2})+'</b></span></div>'
-  +'<div class="trow"><span>Total Paid:</span><span style="color:#2e7d32"><b>GH&#8373; '+Number(student.d_totalPaid||0).toLocaleString('en-GH',{minimumFractionDigits:2})+'</b></span></div>'
+  +'<div class="trow"><span>Total Fee Charged:</span><span><b>GH&#8373; '+totalFee.toLocaleString('en-GH',{minimumFractionDigits:2})+'</b></span></div>'
+  +'<div class="trow"><span>Total Paid:</span><span style="color:#2e7d32"><b>GH&#8373; '+totalPaid.toLocaleString('en-GH',{minimumFractionDigits:2})+'</b></span></div>'
   +'<div class="trow" style="border-top:1px solid #ccc;margin-top:6px;padding-top:6px"><span><b>Balance Outstanding:</b></span>'
-  +'<span style="font-weight:700;color:'+(bal<0?'#c62828':'#2e7d32')+'">GH&#8373; '+bal.toLocaleString('en-GH',{minimumFractionDigits:2})+'</span></div>'
+  +'<span style="font-weight:700;color:'+(balance<0?'#c62828':'#2e7d32')+'">GH&#8373; '+balance.toLocaleString('en-GH',{minimumFractionDigits:2})+'</span></div>'
   +'</div>'
   +'<div class="sig"><div><div class="sline">Cashier / Accounts Officer</div></div>'
   +'<div><div class="sline">Parent / Guardian Signature</div></div></div>'
