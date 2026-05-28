@@ -1279,26 +1279,82 @@ async function showClassResult(){
 
 async function generateIDCards(){
   const cid=document.getElementById('qr_class').value;
-  const cname=_classes.find(c=>c.id==cid)?.name||'';
-  document.getElementById('idCardsView').innerHTML='<div class="section"><p style="text-align:center;color:#666">⏳ Generating...</p></div>';
-  const students=await api('/api/admin/students?class_id='+cid).then(r=>r.json());
+  const cname=(_classes.find(function(c){return c.id==cid;})||{}).name||'';
+  document.getElementById('idCardsView').innerHTML='<div class="section"><p style="text-align:center;color:#666">Generating ID cards...</p></div>';
+  const students=await api('/api/admin/students?class_id='+cid).then(function(r){return r.json();});
   if(!students.length){document.getElementById('idCardsView').innerHTML='<div class="section"><p style="color:#e53935">No students in this class.</p></div>';return;}
-  const qrData=await Promise.all(students.map(s=>api('/api/students/'+s.id+'/qr').then(r=>r.json())));
-  document.getElementById('idCardsView').innerHTML=`
-    <div class="section no-print flex-between" style="margin-bottom:10px">
-      <h3>✅ ${students.length} ID Cards — ${cname}</h3>
-      <button class="btn-sm btn-purple" onclick="window.print()">🖨️ Print All</button>
-    </div>
-    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px" id="idGrid">
-      ${qrData.map(d=>`<div style="border:2px dashed #ccc;border-radius:10px;padding:12px;text-align:center;background:white;page-break-inside:avoid">
-        <img src="/images/logo.jpeg" style="width:45px;height:45px;border-radius:50%;border:2px solid #f5c800;object-fit:cover" onerror="this.style.display='none'">
-        <div style="font-weight:700;font-size:0.75em;color:#4a0080;margin:4px 0">Unto Others International School</div>
-        <img src="${d.qr}" style="width:110px;height:110px;margin:4px 0">
-        <div style="font-weight:700;font-size:0.82em">${d.student.full_name}</div>
-        <div style="font-size:0.72em;color:#555">Adm: ${d.student.admission_number}</div>
-        <div style="font-size:0.72em;color:#4a0080;font-weight:600">${cname}</div>
-      </div>`).join('')}
-    </div>`;
+  const qrData=await Promise.all(students.map(function(s){return api('/api/students/'+s.id+'/qr').then(function(r){return r.json();});}));
+  const cards=qrData.map(function(d){
+    return '<div style="'
+      +'width:85.6mm;height:54mm;'
+      +'border:2px solid #4a0080;border-radius:8px;'
+      +'background:linear-gradient(135deg,#f5f0ff 0%,#fff 60%,#e8f5e9 100%);'
+      +'display:inline-flex;flex-direction:column;align-items:center;justify-content:space-between;'
+      +'padding:6px 8px;box-sizing:border-box;page-break-inside:avoid;vertical-align:top;'
+      +'font-family:Arial,sans-serif;position:relative;overflow:hidden;margin:4px'
+      +'">'
+      +'<div style="position:absolute;top:0;left:0;right:0;height:14px;background:#4a0080"></div>'
+      +'<div style="margin-top:14px;width:100%;display:flex;align-items:center;gap:6px">'
+      +'<img src="/images/logo.jpeg" style="width:32px;height:32px;border-radius:50%;border:2px solid #f5c800;object-fit:cover" onerror="this.style.display='none'">'
+      +'<div style="flex:1">'
+      +'<div style="font-size:6.5px;font-weight:700;color:#4a0080;text-transform:uppercase;letter-spacing:0.5px;line-height:1.2">Unto Others International School</div>'
+      +'<div style="font-size:5.5px;color:#666;font-style:italic">Faith and Righteousness</div>'
+      +'</div>'
+      +'</div>'
+      +'<div style="width:100%;display:flex;align-items:center;gap:8px;margin:2px 0">'
+      +'<div style="width:44px;height:44px;border:1.5px solid #ccc;border-radius:4px;background:#f9f9f9;display:flex;align-items:center;justify-content:center;flex-shrink:0">'
+      +'<span style="font-size:7px;color:#bbb;text-align:center">PHOTO</span>'
+      +'</div>'
+      +'<div style="flex:1">'
+      +'<div style="font-size:8px;font-weight:700;color:#1a237e;line-height:1.3">'+d.student.full_name+'</div>'
+      +'<div style="font-size:6.5px;color:#444;margin-top:2px"><b>Adm:</b> '+d.student.admission_number+'</div>'
+      +'<div style="font-size:6.5px;color:#4a0080;font-weight:600"><b>Class:</b> '+cname+'</div>'
+      +'</div>'
+      +'<img src="'+d.qr+'" style="width:44px;height:44px;flex-shrink:0">'
+      +'</div>'
+      +'<div style="position:absolute;bottom:0;left:0;right:0;height:10px;background:#4a0080;display:flex;align-items:center;justify-content:center">'
+      +'<span style="font-size:5px;color:white;letter-spacing:1px">STUDENT ID CARD</span>'
+      +'</div>'
+      +'</div>';
+  }).join('');
+  document.getElementById('idCardsView').innerHTML=
+    '<div class="section no-print" style="margin-bottom:10px;display:flex;justify-content:space-between;align-items:center">'
+    +'<h3>'+students.length+' ID Cards — '+cname+'</h3>'
+    +'<button class="btn-sm btn-purple" onclick="printIDCards()">Print All ID Cards</button>'
+    +'</div>'
+    +'<div id="idGrid" style="display:flex;flex-wrap:wrap;gap:8px;padding:8px">'+cards+'</div>';
+  window._idCardsHTML=cards;
+  window._idCardsClass=cname;
+  window._idCardsCount=students.length;
+}
+
+function printIDCards(){
+  const cards=window._idCardsHTML||'';
+  const cname=window._idCardsClass||'';
+  const count=window._idCardsCount||0;
+  const w=window.open('','_blank','width=900,height=700');
+  w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Student ID Cards</title><style>'
+  +'*{margin:0;padding:0;box-sizing:border-box}'
+  +'body{font-family:Arial,sans-serif;background:#fff;padding:20px}'
+  +'.hdr{text-align:center;margin-bottom:16px;padding-bottom:12px;border-bottom:2px solid #4a0080}'
+  +'.sn{font-size:1.1em;font-weight:700;color:#4a0080;text-transform:uppercase;letter-spacing:1px}'
+  +'.meta{font-size:0.82em;color:#555;margin-top:4px}'
+  +'.grid{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-start}'
+  +'.pbtn{display:block;margin:16px auto 0;padding:10px 32px;background:#4a0080;color:white;border:none;border-radius:6px;font-size:0.95em;cursor:pointer;letter-spacing:1px}'
+  +'@media print{'
+  +'.pbtn{display:none}'
+  +'.hdr{display:none}'
+  +'body{padding:5mm}'
+  +'}'
+  +'</style></head><body>'
+  +'<div class="hdr">'
+  +'<div class="sn">Unto Others International School</div>'
+  +'<div class="meta">Student ID Cards &mdash; Class: '+cname+' &mdash; '+count+' cards &mdash; Printed: '+new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'})+'</div>'
+  +'</div>'
+  +'<div class="grid">'+cards+'</div>'
+  +'<button class="pbtn" onclick="window.print()">Print All ID Cards</button>'
+  +'</body></html>');
+  w.document.close();
 }
 
 function exportCSV(){
