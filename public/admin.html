@@ -961,6 +961,7 @@ async function fetchTimetable(){
   const cid=document.getElementById('tt_class')?.value;
   if(!cid)return;
   const data=await api('/api/timetable?class_id='+cid).then(r=>r.json());
+  window._ttData=data;
   const days=['Monday','Tuesday','Wednesday','Thursday','Friday'];
   const byDay={};days.forEach(d=>byDay[d]=[]);
   data.forEach(e=>{if(byDay[e.day])byDay[e.day].push(e);});
