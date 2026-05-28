@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendance Reports - Unto Others School</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .nav {
+            background: white;
+            padding: 10px 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .nav a {
+            color: #667eea;
+            text-decoration: none;
+            margin-right: 20px;
+            padding: 5px 10px;
+            display: inline-block;
+            cursor: pointer;
+        }
+        .nav a:hover {
+            background: #667eea;
+            color: white;
+            border-radius: 5px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .filters {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            align-items: flex-end;
+        }
+        .filter-group {
+            flex: 1;
+            min-width: 150px;
+        }
+        .filter-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+        .filter-group select, .filter-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background: #667eea;
+            color: white;
+        }
+        .present { color: #48bb78; font-weight: bold; }
+        .absent { color: #e53e3e; font-weight: bold; }
+        .late { color: #ed8936; font-weight: bold; }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 36px;
+            font-weight: bold;
+        }
+        .logout-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="school-info">
+            <h1>Unto Others International School</h1>
+            <p>Faith and Righteousness</p>
+        </div>
+        <div class="user-info">
+            <span id="userName">Loading...</span>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+    </div>
+    
+    <div class="nav">
+        <a onclick="location.href='dashboard.html'">Dashboard</a>
+        <a onclick="location.href='students.html'">Students</a>
+        <a onclick="location.href='teachers.html'">Teachers</a>
+        <a onclick="location.href='attendance.html'">Mark Attendance</a>
+        <a onclick="location.href='attendance-dashboard.html'">Reports</a>
+        <a onclick="location.href='classes.html'">Classes</a>
+    </div>
+    
+    <div class="container">
+        <h2>📊 Attendance Reports</h2>
+        
+        <div class="filters">
+            <div class="filter-group">
+                <label>Select Class:</label>
+                <select id="classSelect">
+                    <option value="">-- Select Class --</option>
+                    <option value="Nursery 1">Nursery 1</option>
+                    <option value="Nursery 2">Nursery 2</option>
+                    <option value="KG 1">KG 1</option>
+                    <option value="KG 2">KG 2</option>
+                    <option value="Primary 1">Primary 1</option>
+                    <option value="Primary 2">Primary 2</option>
+                    <option value="Primary 3">Primary 3</option>
+                    <option value="Primary 4">Primary 4</option>
+                    <option value="Primary 5">Primary 5</option>
+                    <option value="Primary 6">Primary 6</option>
+                    <option value="JHS 1">JHS 1</option>
+                    <option value="JHS 2">JHS 2</option>
+                    <option value="JHS 3">JHS 3</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Select Date:</label>
+                <input type="date" id="dateSelect">
+            </div>
+            <div class="filter-group">
+                <button class="btn" onclick="loadReport()">View Report</button>
+            </div>
+        </div>
+        
+        <div id="reportContent"></div>
+    </div>
+    
+    <script>
+        const token = localStorage.getItem('token');
+        if (!token) window.location.href = '/';
+        
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        document.getElementById('userName').textContent = user.fullname || user.username;
+        
+        // Set today's date
+        document.getElementById('dateSelect').value = new Date().toISOString().split('T')[0];
+        
+        async function loadReport() {
+            const className = document.getElementById('classSelect').value;
+            const date = document.getElementById('dateSelect').value;
+            
+            if (!className) {
+                alert('Please select a class');
+                return;
+            }
+            
+            document.getElementById('reportContent').innerHTML = '<div class="loading">Loading report...</div>';
+            
+            try {
+                // Get students
+                const studentsRes = await fetch(`/api/attendance/students/${encodeURIComponent(className)}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const students = await studentsRes.json();
+                
+                // Get attendance for this date
+                const attendanceRes = await fetch(`/api/attendance/${encodeURIComponent(className)}/${date}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const attendance = await attendanceRes.json();
+                
+                if (students.length === 0) {
+                    document.getElementById('reportContent').innerHTML = '<div class="loading">No students found in this class.</div>';
+                    return;
+                }
+                
+                let present = 0, absent = 0, late = 0;
+                
+                let html = `
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-number" id="presentCount">0</div>
+                            <div>Present</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="absentCount">0</div>
+                            <div>Absent</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="lateCount">0</div>
+                            <div>Late</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="totalCount">${students.length}</div>
+                            <div>Total Students</div>
+                        </div>
+                    </div>
+                    
+                    <h3>Attendance for ${className} on ${date}</h3>
+                    <table>
+                        <thead>
+                            <tr><th>Student ID</th><th>Student Name</th><th>Status</th></tr>
+                        </thead>
+                        <tbody>
+                `;
+                
+                students.forEach(student => {
+                    const status = attendance[student.student_id] || 'Not Marked';
+                    let statusClass = '';
+                    let statusText = '';
+                    
+                    if (status === 'present') {
+                        statusClass = 'present';
+                        statusText = '✅ Present';
+                        present++;
+                    } else if (status === 'absent') {
+                        statusClass = 'absent';
+                        statusText = '❌ Absent';
+                        absent++;
+                    } else if (status === 'late') {
+                        statusClass = 'late';
+                        statusText = '⏰ Late';
+                        late++;
+                    } else {
+                        statusText = '⏳ Not Marked';
+                    }
+                    
+                    html += `
+                        <tr>
+                            <td>${student.student_id}</td>
+                            <td>${student.fullname}</td>
+                            <td class="${statusClass}">${statusText}</td>
+                        </tr>
+                    `;
+                });
+                
+                html += '</tbody></table>';
+                document.getElementById('reportContent').innerHTML = html;
+                
+                document.getElementById('presentCount').textContent = present;
+                document.getElementById('absentCount').textContent = absent;
+                document.getElementById('lateCount').textContent = late;
+                
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('reportContent').innerHTML = '<div class="loading">Error loading report</div>';
+            }
+        }
+        
+        function logout() {
+            localStorage.clear();
+            window.location.href = '/';
+        }
+    </script>
+</body>
+</html>

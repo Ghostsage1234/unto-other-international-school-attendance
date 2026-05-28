@@ -17,7 +17,6 @@ app.use(express.static('public'));
 
 let db;
 
-// Middleware to verify JWT token
 function authenticateToken(req, res, next) {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
@@ -35,7 +34,6 @@ function authenticateToken(req, res, next) {
   });
 }
 
-// Middleware to check admin role
 function requireAdmin(req, res, next) {
   if (req.user.role !== 'admin') {
     return res.status(403).json({ error: 'Admin access required.' });
@@ -43,13 +41,8 @@ function requireAdmin(req, res, next) {
   next();
 }
 
-// Auth Routes
 app.post('/api/login', async (req, res) => {
   const { username, password } = req.body;
-  
-  if (!username || !password) {
-    return res.status(400).json({ error: 'Username and password required.' });
-  }
   
   try {
     const result = db.exec("SELECT * FROM users WHERE username = ?", [username]);
@@ -61,15 +54,12 @@ app.post('/api/login', async (req, res) => {
     const user = result[0].values[0];
     const storedPassword = user[2];
     
-    // Check if password is hashed or plain
     let passwordValid = false;
     if (storedPassword.startsWith('$2a$') || storedPassword.startsWith('$2b$')) {
       passwordValid = await bcrypt.compare(password, storedPassword);
     } else {
-      // For default admin password, compare directly then hash it
       passwordValid = (password === storedPassword);
-      if (passwordValid && storedPassword !== '$2a$10$hashed') {
-        // Hash the password for next time
+      if (passwordValid) {
         const hashedPassword = await bcrypt.hash(storedPassword, 10);
         db.run("UPDATE users SET password = ? WHERE username = ?", [hashedPassword, username]);
         saveDatabase();
@@ -88,12 +78,7 @@ app.post('/api/login', async (req, res) => {
     
     res.json({
       token,
-      user: {
-        id: user[0],
-        username: user[1],
-        role: user[3],
-        fullname: user[4]
-      }
+      user: { id: user[0], username: user[1], role: user[3], fullname: user[4] }
     });
   } catch (error) {
     console.error('Login error:', error);
@@ -105,7 +90,6 @@ app.post('/api/verify-token', authenticateToken, (req, res) => {
   res.json({ valid: true, user: req.user });
 });
 
-// Dashboard stats
 app.get('/api/dashboard/stats', authenticateToken, async (req, res) => {
   try {
     const totalStudents = db.exec("SELECT COUNT(*) as count FROM students WHERE status = 'active'");
@@ -117,24 +101,273 @@ app.get('/api/dashboard/stats', authenticateToken, async (req, res) => {
       students: totalStudents[0]?.values[0]?.[0] || 0,
       teachers: totalTeachers[0]?.values[0]?.[0] || 0,
       todayAttendance: todayAttendance[0]?.values[0]?.[0] || 0,
-      classes: 15 // Nursery 1-2, KG 1-2, Primary 1-6, JSS 1-3
+      classes: 15
     });
   } catch (error) {
-    console.error('Dashboard stats error:', error);
     res.status(500).json({ error: 'Failed to fetch stats.' });
   }
 });
 
-// Health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// Initialize database and start server
+// Students Module
+app.get('/api/students', authenticateToken, async (req, res) => {
+  try {
+    const classFilter = req.query.class;
+    let query = "SELECT * FROM students WHERE status = 'active'";
+    let params = [];
+    if (classFilter) {
+      query += " AND class = ?";
+      params.push(classFilter);
+    }
+    query += " ORDER BY fullname";
+    const result = db.exec(query, params);
+    const students = result.length > 0 ? result[0].values.map(row => ({
+      id: row[0], student_id: row[1], fullname: row[2], class: row[3],
+      gender: row[4], dob: row[5], address: row[6], parent_phone: row[7],
+      enrollment_date: row[8], status: row[9]
+    })) : [];
+    res.json(students);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch students.' });
+  }
+});
+
+app.post('/api/students', authenticateToken, requireAdmin, async (req, res) => {
+  const { fullname, class: className, gender, dob, address, parent_phone } = req.body;
+  if (!fullname || !className) {
+    return res.status(400).json({ error: 'Fullname and class are required.' });
+  }
+  try {
+    const countResult = db.exec("SELECT COUNT(*) as count FROM students");
+    const count = countResult[0]?.values[0]?.[0] || 0;
+    const studentId = `STU${new Date().getFullYear()}${String(count + 1).padStart(4, '0')}`;
+    db.run("INSERT INTO students (student_id, fullname, class, gender, dob, address, parent_phone) VALUES (?, ?, ?, ?, ?, ?, ?)",
+      [studentId, fullname, className, gender || '', dob || '', address || '', parent_phone || '']);
+    saveDatabase();
+    res.json({ success: true, student_id: studentId });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to add student.' });
+  }
+});
+
+app.put('/api/students/:id', authenticateToken, requireAdmin, async (req, res) => {
+  const { id } = req.params;
+  const { fullname, class: className, gender, dob, address, parent_phone } = req.body;
+  try {
+    db.run("UPDATE students SET fullname = ?, class = ?, gender = ?, dob = ?, address = ?, parent_phone = ? WHERE id = ?",
+      [fullname, className, gender, dob, address, parent_phone, id]);
+    saveDatabase();
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update student.' });
+  }
+});
+
+app.delete('/api/students/:id', authenticateToken, requireAdmin, async (req, res) => {
+  const { id } = req.params;
+  try {
+    db.run("UPDATE students SET status = 'inactive' WHERE id = ?", [id]);
+    saveDatabase();
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete student.' });
+  }
+});
+
+// Teachers Module
+app.get('/api/teachers', authenticateToken, async (req, res) => {
+  try {
+    const result = db.exec("SELECT * FROM teachers WHERE status = 'active' ORDER BY fullname");
+    const teachers = result.length > 0 ? result[0].values.map(row => ({
+      id: row[0], teacher_id: row[1], fullname: row[2], email: row[3],
+      phone: row[4], subjects: row[5], hire_date: row[6], status: row[7]
+    })) : [];
+    res.json(teachers);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch teachers.' });
+  }
+});
+
+app.post('/api/teachers', authenticateToken, requireAdmin, async (req, res) => {
+  const { fullname, email, phone, subjects } = req.body;
+  if (!fullname) return res.status(400).json({ error: 'Fullname is required.' });
+  try {
+    const countResult = db.exec("SELECT COUNT(*) as count FROM teachers");
+    const count = countResult[0]?.values[0]?.[0] || 0;
+    const teacherId = `TCH${new Date().getFullYear()}${String(count + 1).padStart(4, '0')}`;
+    db.run("INSERT INTO teachers (teacher_id, fullname, email, phone, subjects) VALUES (?, ?, ?, ?, ?)",
+      [teacherId, fullname, email || '', phone || '', subjects || '']);
+    saveDatabase();
+    res.json({ success: true, teacher_id: teacherId });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to add teacher.' });
+  }
+});
+
+app.put('/api/teachers/:id', authenticateToken, requireAdmin, async (req, res) => {
+  const { id } = req.params;
+  const { fullname, email, phone, subjects } = req.body;
+  try {
+    db.run("UPDATE teachers SET fullname = ?, email = ?, phone = ?, subjects = ? WHERE id = ?",
+      [fullname, email, phone, subjects, id]);
+    saveDatabase();
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update teacher.' });
+  }
+});
+
+app.delete('/api/teachers/:id', authenticateToken, requireAdmin, async (req, res) => {
+  const { id } = req.params;
+  try {
+    db.run("UPDATE teachers SET status = 'inactive' WHERE id = ?", [id]);
+    saveDatabase();
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete teacher.' });
+  }
+});
+
+// Attendance Module
+app.get('/api/attendance/students/:class', authenticateToken, async (req, res) => {
+  try {
+    const result = db.exec("SELECT id, student_id, fullname FROM students WHERE class = ? AND status = 'active' ORDER BY fullname", [req.params.class]);
+    const students = result.length > 0 ? result[0].values.map(row => ({ id: row[0], student_id: row[1], fullname: row[2] })) : [];
+    res.json(students);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch students.' });
+  }
+});
+
+app.get('/api/attendance/:class/:date', authenticateToken, async (req, res) => {
+  try {
+    const result = db.exec("SELECT student_id, status FROM attendance WHERE class = ? AND date = ?", [req.params.class, req.params.date]);
+    const attendance = {};
+    if (result.length > 0) {
+      result[0].values.forEach(row => { attendance[row[0]] = row[1]; });
+    }
+    res.json(attendance);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch attendance.' });
+  }
+});
+
+app.post('/api/attendance', authenticateToken, async (req, res) => {
+  const { class: className, date, attendance } = req.body;
+  if (!className || !date || !attendance) {
+    return res.status(400).json({ error: 'Class, date, and attendance data required.' });
+  }
+  try {
+    db.run("BEGIN TRANSACTION");
+    db.run("DELETE FROM attendance WHERE class = ? AND date = ?", [className, date]);
+    for (const [studentId, status] of Object.entries(attendance)) {
+      if (status) {
+        db.run("INSERT INTO attendance (student_id, class, date, status, marked_by) VALUES (?, ?, ?, ?, ?)",
+          [studentId, className, date, status, req.user.id]);
+      }
+    }
+    db.run("COMMIT");
+    saveDatabase();
+    res.json({ success: true });
+  } catch (error) {
+    db.run("ROLLBACK");
+    res.status(500).json({ error: 'Failed to save attendance.' });
+  }
+});
+
+// Classes Module
+app.get('/api/classes', authenticateToken, async (req, res) => {
+  res.json(['Nursery 1', 'Nursery 2', 'KG 1', 'KG 2', 'Primary 1', 'Primary 2', 'Primary 3', 'Primary 4', 'Primary 5', 'Primary 6', 'JHS 1', 'JHS 2', 'JHS 3']);
+});
+
+app.get('/api/classes/:className/subjects', authenticateToken, async (req, res) => {
+  const result = db.exec("SELECT subject_name FROM class_subjects WHERE class_name = ? ORDER BY subject_name", [req.params.className]);
+  const subjects = result.length > 0 ? result[0].values.map(row => row[0]) : [];
+  res.json(subjects);
+});
+
+app.post('/api/classes/:className/subjects', authenticateToken, requireAdmin, async (req, res) => {
+  const { subject_name } = req.body;
+  if (!subject_name) return res.status(400).json({ error: 'Subject name is required.' });
+  try {
+    db.run("INSERT OR IGNORE INTO class_subjects (class_name, subject_name) VALUES (?, ?)", [req.params.className, subject_name]);
+    saveDatabase();
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to add subject.' });
+  }
+});
+
+app.delete('/api/classes/:className/subjects/:subjectName', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    db.run("DELETE FROM class_subjects WHERE class_name = ? AND subject_name = ?", [req.params.className, decodeURIComponent(req.params.subjectName)]);
+    saveDatabase();
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to remove subject.' });
+  }
+});
+
+// Holidays Module
+app.get('/api/holidays', authenticateToken, async (req, res) => {
+  try {
+    const result = db.exec("SELECT * FROM holidays ORDER BY holiday_date");
+    const holidays = result.length > 0 ? result[0].values.map(row => ({ id: row[0], holiday_date: row[1], name: row[2], description: row[3], is_recurring: row[4] })) : [];
+    res.json(holidays);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch holidays.' });
+  }
+});
+
+app.post('/api/holidays', authenticateToken, requireAdmin, async (req, res) => {
+  const { holiday_date, name, description } = req.body;
+  if (!holiday_date || !name) return res.status(400).json({ error: 'Date and name are required.' });
+  try {
+    db.run("INSERT INTO holidays (holiday_date, name, description) VALUES (?, ?, ?)", [holiday_date, name, description || '']);
+    saveDatabase();
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to add holiday.' });
+  }
+});
+
+app.delete('/api/holidays/:id', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    db.run("DELETE FROM holidays WHERE id = ?", [req.params.id]);
+    saveDatabase();
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete holiday.' });
+  }
+});
+
+app.get('/api/is-holiday/:date', authenticateToken, async (req, res) => {
+  try {
+    const result = db.exec("SELECT name FROM holidays WHERE holiday_date = ?", [req.params.date]);
+    const isHoliday = result.length > 0 && result[0].values.length > 0;
+    res.json({ isHoliday, holidayName: isHoliday ? result[0].values[0][0] : null });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to check holiday.' });
+  }
+});
+
 async function startServer() {
   db = await initDatabase();
   
-  // Hash default admin password if it's plain text
+  // Create holidays table
+  db.run(`CREATE TABLE IF NOT EXISTS holidays (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    holiday_date TEXT UNIQUE NOT NULL,
+    name TEXT NOT NULL,
+    description TEXT,
+    is_recurring INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )`);
+  
+  // Hash admin password
   const adminResult = db.exec("SELECT password FROM users WHERE username = 'admin'");
   if (adminResult.length > 0 && adminResult[0].values.length > 0) {
     const password = adminResult[0].values[0][0];
@@ -145,6 +378,8 @@ async function startServer() {
     }
   }
   
+  saveDatabase();
+  
   app.listen(PORT, () => {
     console.log(`School Management System running on port ${PORT}`);
     console.log(`Admin login: username="admin", password="password"`);
@@ -152,384 +387,3 @@ async function startServer() {
 }
 
 startServer().catch(console.error);
-
-// ============ STUDENTS MODULE ============
-
-// Get all students
-app.get('/api/students', authenticateToken, async (req, res) => {
-  try {
-    const classFilter = req.query.class;
-    let query = "SELECT * FROM students WHERE status = 'active'";
-    let params = [];
-    
-    if (classFilter) {
-      query += " AND class = ?";
-      params.push(classFilter);
-    }
-    
-    query += " ORDER BY fullname";
-    const result = db.exec(query, params);
-    
-    const students = result.length > 0 ? result[0].values.map(row => ({
-      id: row[0],
-      student_id: row[1],
-      fullname: row[2],
-      class: row[3],
-      gender: row[4],
-      dob: row[5],
-      address: row[6],
-      parent_phone: row[7],
-      enrollment_date: row[8],
-      status: row[9]
-    })) : [];
-    
-    res.json(students);
-  } catch (error) {
-    console.error('Get students error:', error);
-    res.status(500).json({ error: 'Failed to fetch students.' });
-  }
-});
-
-// Add new student
-app.post('/api/students', authenticateToken, requireAdmin, async (req, res) => {
-  const { fullname, class: className, gender, dob, address, parent_phone } = req.body;
-  
-  if (!fullname || !className) {
-    return res.status(400).json({ error: 'Fullname and class are required.' });
-  }
-  
-  try {
-    // Generate student ID (e.g., STU2024001)
-    const countResult = db.exec("SELECT COUNT(*) as count FROM students");
-    const count = countResult[0]?.values[0]?.[0] || 0;
-    const studentId = `STU${new Date().getFullYear()}${String(count + 1).padStart(4, '0')}`;
-    
-    db.run(
-      "INSERT INTO students (student_id, fullname, class, gender, dob, address, parent_phone) VALUES (?, ?, ?, ?, ?, ?, ?)",
-      [studentId, fullname, className, gender || '', dob || '', address || '', parent_phone || '']
-    );
-    saveDatabase();
-    
-    res.json({ success: true, student_id: studentId, message: 'Student added successfully.' });
-  } catch (error) {
-    console.error('Add student error:', error);
-    res.status(500).json({ error: 'Failed to add student.' });
-  }
-});
-
-// Update student
-app.put('/api/students/:id', authenticateToken, requireAdmin, async (req, res) => {
-  const { id } = req.params;
-  const { fullname, class: className, gender, dob, address, parent_phone } = req.body;
-  
-  try {
-    db.run(
-      "UPDATE students SET fullname = ?, class = ?, gender = ?, dob = ?, address = ?, parent_phone = ? WHERE id = ?",
-      [fullname, className, gender, dob, address, parent_phone, id]
-    );
-    saveDatabase();
-    res.json({ success: true, message: 'Student updated successfully.' });
-  } catch (error) {
-    console.error('Update student error:', error);
-    res.status(500).json({ error: 'Failed to update student.' });
-  }
-});
-
-// Delete student (soft delete)
-app.delete('/api/students/:id', authenticateToken, requireAdmin, async (req, res) => {
-  const { id } = req.params;
-  
-  try {
-    db.run("UPDATE students SET status = 'inactive' WHERE id = ?", [id]);
-    saveDatabase();
-    res.json({ success: true, message: 'Student deleted successfully.' });
-  } catch (error) {
-    console.error('Delete student error:', error);
-    res.status(500).json({ error: 'Failed to delete student.' });
-  }
-});
-
-// ============ TEACHERS MODULE ============
-
-// Get all teachers
-app.get('/api/teachers', authenticateToken, async (req, res) => {
-  try {
-    const result = db.exec("SELECT * FROM teachers WHERE status = 'active' ORDER BY fullname");
-    
-    const teachers = result.length > 0 ? result[0].values.map(row => ({
-      id: row[0],
-      teacher_id: row[1],
-      fullname: row[2],
-      email: row[3],
-      phone: row[4],
-      subjects: row[5],
-      hire_date: row[6],
-      status: row[7]
-    })) : [];
-    
-    res.json(teachers);
-  } catch (error) {
-    console.error('Get teachers error:', error);
-    res.status(500).json({ error: 'Failed to fetch teachers.' });
-  }
-});
-
-// Add new teacher
-app.post('/api/teachers', authenticateToken, requireAdmin, async (req, res) => {
-  const { fullname, email, phone, subjects } = req.body;
-  
-  if (!fullname) {
-    return res.status(400).json({ error: 'Fullname is required.' });
-  }
-  
-  try {
-    const countResult = db.exec("SELECT COUNT(*) as count FROM teachers");
-    const count = countResult[0]?.values[0]?.[0] || 0;
-    const teacherId = `TCH${new Date().getFullYear()}${String(count + 1).padStart(4, '0')}`;
-    
-    db.run(
-      "INSERT INTO teachers (teacher_id, fullname, email, phone, subjects) VALUES (?, ?, ?, ?, ?)",
-      [teacherId, fullname, email || '', phone || '', subjects || '']
-    );
-    saveDatabase();
-    
-    res.json({ success: true, teacher_id: teacherId, message: 'Teacher added successfully.' });
-  } catch (error) {
-    console.error('Add teacher error:', error);
-    res.status(500).json({ error: 'Failed to add teacher.' });
-  }
-});
-
-// Update teacher
-app.put('/api/teachers/:id', authenticateToken, requireAdmin, async (req, res) => {
-  const { id } = req.params;
-  const { fullname, email, phone, subjects } = req.body;
-  
-  try {
-    db.run(
-      "UPDATE teachers SET fullname = ?, email = ?, phone = ?, subjects = ? WHERE id = ?",
-      [fullname, email, phone, subjects, id]
-    );
-    saveDatabase();
-    res.json({ success: true, message: 'Teacher updated successfully.' });
-  } catch (error) {
-    console.error('Update teacher error:', error);
-    res.status(500).json({ error: 'Failed to update teacher.' });
-  }
-});
-
-// Delete teacher
-app.delete('/api/teachers/:id', authenticateToken, requireAdmin, async (req, res) => {
-  const { id } = req.params;
-  
-  try {
-    db.run("UPDATE teachers SET status = 'inactive' WHERE id = ?", [id]);
-    saveDatabase();
-    res.json({ success: true, message: 'Teacher deleted successfully.' });
-  } catch (error) {
-    console.error('Delete teacher error:', error);
-    res.status(500).json({ error: 'Failed to delete teacher.' });
-  }
-});
-
-// ============ ATTENDANCE MODULE ============
-
-// Get students by class for attendance
-app.get('/api/attendance/students/:class', authenticateToken, async (req, res) => {
-  try {
-    const className = req.params.class;
-    const result = db.exec(
-      "SELECT id, student_id, fullname FROM students WHERE class = ? AND status = 'active' ORDER BY fullname",
-      [className]
-    );
-    
-    const students = result.length > 0 ? result[0].values.map(row => ({
-      id: row[0],
-      student_id: row[1],
-      fullname: row[2]
-    })) : [];
-    
-    res.json(students);
-  } catch (error) {
-    console.error('Get students for attendance error:', error);
-    res.status(500).json({ error: 'Failed to fetch students.' });
-  }
-});
-
-// Get attendance for a specific class and date
-app.get('/api/attendance/:class/:date', authenticateToken, async (req, res) => {
-  try {
-    const className = req.params.class;
-    const date = req.params.date;
-    
-    const result = db.exec(
-      "SELECT student_id, status FROM attendance WHERE class = ? AND date = ?",
-      [className, date]
-    );
-    
-    const attendance = {};
-    if (result.length > 0) {
-      result[0].values.forEach(row => {
-        attendance[row[0]] = row[1];
-      });
-    }
-    
-    res.json(attendance);
-  } catch (error) {
-    console.error('Get attendance error:', error);
-    res.status(500).json({ error: 'Failed to fetch attendance.' });
-  }
-});
-
-// Save attendance
-app.post('/api/attendance', authenticateToken, async (req, res) => {
-  const { class: className, date, attendance } = req.body;
-  
-  if (!className || !date || !attendance) {
-    return res.status(400).json({ error: 'Class, date, and attendance data required.' });
-  }
-  
-  try {
-    // Begin transaction
-    db.run("BEGIN TRANSACTION");
-    
-    // Delete existing attendance for this class/date
-    db.run("DELETE FROM attendance WHERE class = ? AND date = ?", [className, date]);
-    
-    // Insert new attendance records
-    for (const [studentId, status] of Object.entries(attendance)) {
-      if (status) {
-        db.run(
-          "INSERT INTO attendance (student_id, class, date, status, marked_by) VALUES (?, ?, ?, ?, ?)",
-          [studentId, className, date, status, req.user.id]
-        );
-      }
-    }
-    
-    db.run("COMMIT");
-    saveDatabase();
-    
-    res.json({ success: true, message: 'Attendance saved successfully.' });
-  } catch (error) {
-    db.run("ROLLBACK");
-    console.error('Save attendance error:', error);
-    res.status(500).json({ error: 'Failed to save attendance.' });
-  }
-});
-
-// Get attendance summary for dashboard
-app.get('/api/attendance/summary/:date', authenticateToken, async (req, res) => {
-  try {
-    const date = req.params.date;
-    const result = db.exec(
-      "SELECT status, COUNT(*) as count FROM attendance WHERE date = ? GROUP BY status",
-      [date]
-    );
-    
-    const summary = { present: 0, absent: 0, late: 0 };
-    if (result.length > 0) {
-      result[0].values.forEach(row => {
-        const status = row[0];
-        const count = row[1];
-        if (status === 'present') summary.present = count;
-        else if (status === 'absent') summary.absent = count;
-        else if (status === 'late') summary.late = count;
-      });
-    }
-    
-    res.json(summary);
-  } catch (error) {
-    console.error('Get attendance summary error:', error);
-    res.status(500).json({ error: 'Failed to fetch attendance summary.' });
-  }
-});
-
-// ============ CLASSES & SUBJECTS MODULE ============
-
-// Get all classes
-app.get('/api/classes', authenticateToken, async (req, res) => {
-  const classes = [
-    'Nursery 1', 'Nursery 2', 'KG 1', 'KG 2',
-    'Primary 1', 'Primary 2', 'Primary 3', 'Primary 4', 'Primary 5', 'Primary 6',
-    'JSS 1', 'JSS 2', 'JSS 3'
-  ];
-  res.json(classes);
-});
-
-// Get subjects for a class
-app.get('/api/classes/:className/subjects', authenticateToken, async (req, res) => {
-  const className = req.params.className;
-  
-  // Check if subjects table exists, if not create it
-  db.run(`
-    CREATE TABLE IF NOT EXISTS class_subjects (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      class_name TEXT NOT NULL,
-      subject_name TEXT NOT NULL,
-      UNIQUE(class_name, subject_name)
-    )
-  `);
-  
-  const result = db.exec(
-    "SELECT subject_name FROM class_subjects WHERE class_name = ? ORDER BY subject_name",
-    [className]
-  );
-  
-  const subjects = result.length > 0 ? result[0].values.map(row => row[0]) : [];
-  res.json(subjects);
-});
-
-// Add subject to a class
-app.post('/api/classes/:className/subjects', authenticateToken, requireAdmin, async (req, res) => {
-  const className = req.params.className;
-  const { subject_name } = req.body;
-  
-  if (!subject_name) {
-    return res.status(400).json({ error: 'Subject name is required.' });
-  }
-  
-  try {
-    db.run(
-      "INSERT OR IGNORE INTO class_subjects (class_name, subject_name) VALUES (?, ?)",
-      [className, subject_name]
-    );
-    saveDatabase();
-    res.json({ success: true, message: 'Subject added successfully.' });
-  } catch (error) {
-    console.error('Add subject error:', error);
-    res.status(500).json({ error: 'Failed to add subject.' });
-  }
-});
-
-// Remove subject from a class
-app.delete('/api/classes/:className/subjects/:subjectName', authenticateToken, requireAdmin, async (req, res) => {
-  const { className, subjectName } = req.params;
-  
-  try {
-    db.run(
-      "DELETE FROM class_subjects WHERE class_name = ? AND subject_name = ?",
-      [className, decodeURIComponent(subjectName)]
-    );
-    saveDatabase();
-    res.json({ success: true, message: 'Subject removed successfully.' });
-  } catch (error) {
-    console.error('Remove subject error:', error);
-    res.status(500).json({ error: 'Failed to remove subject.' });
-  }
-});
-
-// Get all subjects across all classes (for dropdowns)
-app.get('/api/all-subjects', authenticateToken, async (req, res) => {
-  db.run(`
-    CREATE TABLE IF NOT EXISTS class_subjects (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      class_name TEXT NOT NULL,
-      subject_name TEXT NOT NULL,
-      UNIQUE(class_name, subject_name)
-    )
-  `);
-  
-  const result = db.exec("SELECT DISTINCT subject_name FROM class_subjects ORDER BY subject_name");
-  const subjects = result.length > 0 ? result[0].values.map(row => row[0]) : [];
-  res.json(subjects);
-});

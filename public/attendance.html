@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Attendance Management - Unto Others School</title>
+    <title>Mark Attendance - Unto Others School</title>
     <style>
         * {
             margin: 0;
@@ -50,14 +50,17 @@
         }
         .controls {
             display: flex;
-            gap: 20px;
-            margin-bottom: 20px;
+            gap: 15px;
+            margin-bottom: 30px;
             flex-wrap: wrap;
             align-items: flex-end;
+            background: #f7fafc;
+            padding: 20px;
+            border-radius: 10px;
         }
         .control-group {
             flex: 1;
-            min-width: 200px;
+            min-width: 180px;
         }
         .control-group label {
             display: block;
@@ -70,85 +73,119 @@
             padding: 10px;
             border: 1px solid #ddd;
             border-radius: 5px;
-            font-size: 14px;
         }
         .btn {
             background: #667eea;
             color: white;
             border: none;
-            padding: 10px 20px;
+            padding: 10px 25px;
             border-radius: 5px;
             cursor: pointer;
-            font-size: 14px;
         }
         .btn-success {
             background: #48bb78;
         }
-        .btn-danger {
-            background: #e53e3e;
-        }
         .btn-info {
             background: #4299e1;
         }
-        table {
+        .students-table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 20px;
         }
-        th, td {
+        .students-table th, .students-table td {
             padding: 12px;
             text-align: left;
             border-bottom: 1px solid #ddd;
         }
-        th {
+        .students-table th {
             background: #667eea;
             color: white;
         }
+        .attendance-buttons {
+            display: flex;
+            gap: 10px;
+        }
         .attendance-btn {
-            padding: 5px 15px;
-            margin: 0 5px;
+            padding: 8px 20px;
             border: none;
             border-radius: 5px;
             cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
         }
         .btn-present {
+            background: #c6f6d5;
+            color: #22543d;
+            border: 2px solid #48bb78;
+        }
+        .btn-present.active {
             background: #48bb78;
             color: white;
         }
         .btn-absent {
+            background: #fed7d7;
+            color: #742a2a;
+            border: 2px solid #e53e3e;
+        }
+        .btn-absent.active {
             background: #e53e3e;
             color: white;
         }
         .btn-late {
+            background: #feebc8;
+            color: #7b341e;
+            border: 2px solid #ed8936;
+        }
+        .btn-late.active {
             background: #ed8936;
             color: white;
         }
-        .active-status {
-            box-shadow: 0 0 0 2px white, 0 0 0 4px #333;
-        }
         .summary {
-            display: flex;
-            gap: 20px;
-            margin-top: 20px;
-            padding: 15px;
-            background: #f7fafc;
+            margin-top: 30px;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             border-radius: 10px;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            color: white;
         }
         .summary-card {
-            flex: 1;
             text-align: center;
-            padding: 10px;
-            background: white;
-            border-radius: 5px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            background: rgba(255,255,255,0.2);
+            padding: 15px;
+            border-radius: 10px;
         }
         .summary-number {
-            font-size: 24px;
+            font-size: 32px;
             font-weight: bold;
         }
-        .summary-label {
+        .alert {
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        .alert-success {
+            background: #c6f6d5;
+            color: #22543d;
+            border: 1px solid #48bb78;
+        }
+        .alert-error {
+            background: #fed7d7;
+            color: #742a2a;
+            border: 1px solid #e53e3e;
+        }
+        .alert-warning {
+            background: #feebc8;
+            color: #7b341e;
+            border: 1px solid #ed8936;
+        }
+        .loading {
+            text-align: center;
+            padding: 50px;
             color: #666;
-            margin-top: 5px;
         }
         .logout-btn {
             background: rgba(255,255,255,0.2);
@@ -163,11 +200,9 @@
             align-items: center;
             gap: 15px;
         }
-        .loading {
-            text-align: center;
-            padding: 40px;
-            font-size: 18px;
-            color: #666;
+        h2 {
+            margin-bottom: 20px;
+            color: #333;
         }
     </style>
 </head>
@@ -187,18 +222,22 @@
         <a onclick="location.href='dashboard.html'">Dashboard</a>
         <a onclick="location.href='students.html'">Students</a>
         <a onclick="location.href='teachers.html'">Teachers</a>
-        <a onclick="location.href='attendance.html'">Attendance</a>
-        <a onclick="location.href='fees.html'">Fees</a>
+        <a onclick="location.href='attendance.html'">Mark Attendance</a>
+        <a onclick="location.href='attendance-dashboard.html'">Reports</a>
+        <a onclick="location.href='holidays.html'">Holidays</a>
+        <a onclick="location.href='classes.html'">Classes</a>
     </div>
     
     <div class="container">
-        <h2>Attendance Management</h2>
+        <h2>📋 Mark Student Attendance</h2>
+        
+        <div id="alert" class="alert"></div>
         
         <div class="controls">
             <div class="control-group">
-                <label>Select Class</label>
+                <label>Select Class:</label>
                 <select id="classSelect">
-                    <option value="">Select Class</option>
+                    <option value="">-- Select a Class --</option>
                     <option value="Nursery 1">Nursery 1</option>
                     <option value="Nursery 2">Nursery 2</option>
                     <option value="KG 1">KG 1</option>
@@ -215,23 +254,23 @@
                 </select>
             </div>
             <div class="control-group">
-                <label>Select Date</label>
+                <label>Select Date:</label>
                 <input type="date" id="dateSelect">
             </div>
             <div class="control-group">
-                <button class="btn" onclick="loadAttendance()">Load Attendance</button>
+                <button class="btn" onclick="loadStudents()">📊 Load Students</button>
             </div>
             <div class="control-group">
-                <button class="btn btn-success" onclick="saveAttendance()">Save Attendance</button>
+                <button class="btn btn-success" id="saveBtn" onclick="saveAttendance()" style="display: none;">💾 Save Attendance</button>
             </div>
             <div class="control-group">
-                <button class="btn btn-info" onclick="exportToCSV()">Export to CSV</button>
+                <button class="btn btn-info" id="exportBtn" onclick="exportToCSV()" style="display: none;">📎 Export CSV</button>
             </div>
         </div>
         
-        <div id="attendanceTable"></div>
-        
-        <div id="summary" class="summary" style="display: none;"></div>
+        <div id="attendanceContent">
+            <div class="loading">👈 Please select a class and date, then click 'Load Students'</div>
+        </div>
     </div>
     
     <script>
@@ -241,76 +280,122 @@
         const user = JSON.parse(localStorage.getItem('user') || '{}');
         document.getElementById('userName').textContent = user.fullname || user.username;
         
-        // Set today's date as default
-        const today = new Date().toISOString().split('T')[0];
-        document.getElementById('dateSelect').value = today;
+        document.getElementById('dateSelect').value = new Date().toISOString().split('T')[0];
         
-        let students = [];
+        let studentsList = [];
         let currentAttendance = {};
         
-        async function loadAttendance() {
+        function showAlert(message, type) {
+            const alertDiv = document.getElementById('alert');
+            alertDiv.textContent = message;
+            alertDiv.className = `alert alert-${type}`;
+            alertDiv.style.display = 'block';
+            setTimeout(() => {
+                alertDiv.style.display = 'none';
+            }, 3000);
+        }
+        
+        async function checkIfHoliday() {
+            const date = document.getElementById('dateSelect').value;
+            try {
+                const response = await fetch(`/api/is-holiday/${date}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await response.json();
+                if (data.isHoliday) {
+                    showAlert(`🎉 HOLIDAY: ${data.holidayName} - No attendance needed today`, 'warning');
+                    document.getElementById('attendanceContent').innerHTML = `
+                        <div class="loading" style="background: #feebc8; border-radius: 10px;">
+                            🎉 <strong>${data.holidayName}</strong><br>
+                            No attendance required for today. Enjoy the holiday!
+                        </div>
+                    `;
+                    document.getElementById('saveBtn').style.display = 'none';
+                    document.getElementById('exportBtn').style.display = 'none';
+                    return false;
+                }
+                return true;
+            } catch (error) {
+                return true;
+            }
+        }
+        
+        async function loadStudents() {
+            const isNotHoliday = await checkIfHoliday();
+            if (!isNotHoliday) return;
+            
             const className = document.getElementById('classSelect').value;
             const date = document.getElementById('dateSelect').value;
             
             if (!className) {
-                alert('Please select a class');
+                showAlert('Please select a class', 'error');
                 return;
             }
             
-            document.getElementById('attendanceTable').innerHTML = '<div class="loading">Loading students...</div>';
+            document.getElementById('attendanceContent').innerHTML = '<div class="loading">Loading students...</div>';
             
             try {
-                // Load students
                 const studentsResponse = await fetch(`/api/attendance/students/${encodeURIComponent(className)}`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
-                students = await studentsResponse.json();
                 
-                // Load existing attendance for this date
+                if (!studentsResponse.ok) throw new Error('Failed to load students');
+                
+                studentsList = await studentsResponse.json();
+                
+                if (studentsList.length === 0) {
+                    document.getElementById('attendanceContent').innerHTML = '<div class="loading">No students found in this class.</div>';
+                    document.getElementById('saveBtn').style.display = 'none';
+                    document.getElementById('exportBtn').style.display = 'none';
+                    return;
+                }
+                
                 const attendanceResponse = await fetch(`/api/attendance/${encodeURIComponent(className)}/${date}`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
-                currentAttendance = await attendanceResponse.json();
+                
+                if (attendanceResponse.ok) {
+                    currentAttendance = await attendanceResponse.json();
+                } else {
+                    currentAttendance = {};
+                }
                 
                 displayAttendanceTable();
-                loadSummary(className, date);
+                updateSummary();
+                
+                document.getElementById('saveBtn').style.display = 'block';
+                document.getElementById('exportBtn').style.display = 'block';
+                
             } catch (error) {
-                console.error('Error loading attendance:', error);
-                document.getElementById('attendanceTable').innerHTML = '<div class="loading">Error loading data</div>';
+                console.error('Error:', error);
+                document.getElementById('attendanceContent').innerHTML = '<div class="loading">Error loading data. Please try again.</div>';
+                showAlert('Failed to load students', 'error');
             }
         }
         
         function displayAttendanceTable() {
-            if (students.length === 0) {
-                document.getElementById('attendanceTable').innerHTML = '<div class="loading">No students found in this class</div>';
-                return;
-            }
+            let html = `<table class="students-table"><thead><tr><th>#</th><th>Student ID</th><th>Student Name</th><th>Attendance Status</th></tr></thead><tbody>`;
             
-            let html = `
-                <table>
-                    <thead>
-                        <tr><th>Student ID</th><th>Student Name</th><th>Attendance Status</th></tr>
-                    </thead>
-                    <tbody>
-            `;
-            
-            students.forEach(student => {
+            studentsList.forEach((student, index) => {
                 const status = currentAttendance[student.student_id] || '';
                 html += `
                     <tr>
+                        <td>${index + 1}</td>
                         <td>${student.student_id}</td>
-                        <td>${student.fullname}</td>
+                        <td><strong>${student.fullname}</strong></td>
                         <td>
-                            <button class="attendance-btn btn-present ${status === 'present' ? 'active-status' : ''}" onclick="setAttendance('${student.student_id}', 'present')">Present</button>
-                            <button class="attendance-btn btn-absent ${status === 'absent' ? 'active-status' : ''}" onclick="setAttendance('${student.student_id}', 'absent')">Absent</button>
-                            <button class="attendance-btn btn-late ${status === 'late' ? 'active-status' : ''}" onclick="setAttendance('${student.student_id}', 'late')">Late</button>
+                            <div class="attendance-buttons">
+                                <button class="attendance-btn btn-present ${status === 'present' ? 'active' : ''}" onclick="setAttendance('${student.student_id}', 'present')">✅ Present</button>
+                                <button class="attendance-btn btn-absent ${status === 'absent' ? 'active' : ''}" onclick="setAttendance('${student.student_id}', 'absent')">❌ Absent</button>
+                                <button class="attendance-btn btn-late ${status === 'late' ? 'active' : ''}" onclick="setAttendance('${student.student_id}', 'late')">⏰ Late</button>
+                            </div>
                         </td>
                     </tr>
                 `;
             });
             
-            html += '</tbody></table>';
-            document.getElementById('attendanceTable').innerHTML = html;
+            html += `</tbody></table>`;
+            document.getElementById('attendanceContent').innerHTML = html;
         }
         
         function setAttendance(studentId, status) {
@@ -320,6 +405,36 @@
                 currentAttendance[studentId] = status;
             }
             displayAttendanceTable();
+            updateSummary();
+        }
+        
+        function updateSummary() {
+            let present = 0, absent = 0, late = 0;
+            
+            studentsList.forEach(student => {
+                const status = currentAttendance[student.student_id];
+                if (status === 'present') present++;
+                else if (status === 'absent') absent++;
+                else if (status === 'late') late++;
+            });
+            
+            const total = studentsList.length;
+            const marked = present + absent + late;
+            const unmarked = total - marked;
+            
+            const summaryHtml = `
+                <div class="summary">
+                    <div class="summary-card"><div class="summary-number">${present}</div><div>✅ Present</div></div>
+                    <div class="summary-card"><div class="summary-number">${absent}</div><div>❌ Absent</div></div>
+                    <div class="summary-card"><div class="summary-number">${late}</div><div>⏰ Late</div></div>
+                    <div class="summary-card"><div class="summary-number">${unmarked}</div><div>⏳ Not Marked</div></div>
+                </div>
+            `;
+            
+            const content = document.getElementById('attendanceContent');
+            const existingSummary = document.querySelector('.summary');
+            if (existingSummary) existingSummary.remove();
+            content.insertAdjacentHTML('beforeend', summaryHtml);
         }
         
         async function saveAttendance() {
@@ -327,65 +442,46 @@
             const date = document.getElementById('dateSelect').value;
             
             if (!className) {
-                alert('Please select a class');
+                showAlert('Please select a class', 'error');
                 return;
             }
             
-            const response = await fetch('/api/attendance', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                    class: className,
-                    date: date,
-                    attendance: currentAttendance
-                })
-            });
-            
-            if (response.ok) {
-                alert('Attendance saved successfully!');
-                loadSummary(className, date);
-            } else {
-                const error = await response.json();
-                alert('Error: ' + error.error);
+            if (Object.keys(currentAttendance).length === 0) {
+                showAlert('Please mark attendance for at least one student', 'error');
+                return;
             }
-        }
-        
-        async function loadSummary(className, date) {
-            const response = await fetch(`/api/attendance/summary/${date}`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
             
-            if (response.ok) {
-                const summary = await response.json();
-                const summaryDiv = document.getElementById('summary');
-                summaryDiv.style.display = 'flex';
-                summaryDiv.innerHTML = `
-                    <div class="summary-card">
-                        <div class="summary-number" style="color: #48bb78;">${summary.present}</div>
-                        <div class="summary-label">Present</div>
-                    </div>
-                    <div class="summary-card">
-                        <div class="summary-number" style="color: #e53e3e;">${summary.absent}</div>
-                        <div class="summary-label">Absent</div>
-                    </div>
-                    <div class="summary-card">
-                        <div class="summary-number" style="color: #ed8936;">${summary.late}</div>
-                        <div class="summary-label">Late</div>
-                    </div>
-                    <div class="summary-card">
-                        <div class="summary-number">${summary.present + summary.absent + summary.late}</div>
-                        <div class="summary-label">Total</div>
-                    </div>
-                `;
+            showAlert('Saving attendance...', 'success');
+            
+            try {
+                const response = await fetch('/api/attendance', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        class: className,
+                        date: date,
+                        attendance: currentAttendance
+                    })
+                });
+                
+                if (response.ok) {
+                    showAlert('Attendance saved successfully! ✅', 'success');
+                    await loadStudents();
+                } else {
+                    const error = await response.json();
+                    showAlert('Error: ' + error.error, 'error');
+                }
+            } catch (error) {
+                showAlert('Failed to save attendance', 'error');
             }
         }
         
         function exportToCSV() {
-            if (students.length === 0) {
-                alert('No data to export');
+            if (studentsList.length === 0) {
+                showAlert('No data to export', 'error');
                 return;
             }
             
@@ -393,18 +489,19 @@
             const date = document.getElementById('dateSelect').value;
             
             let csv = 'Student ID,Student Name,Attendance Status\n';
-            students.forEach(student => {
+            studentsList.forEach(student => {
                 const status = currentAttendance[student.student_id] || 'Not Marked';
-                csv += `${student.student_id},${student.fullname},${status}\n`;
+                let statusText = status === 'present' ? 'Present' : (status === 'absent' ? 'Absent' : (status === 'late' ? 'Late' : 'Not Marked'));
+                csv += `"${student.student_id}","${student.fullname}","${statusText}"\n`;
             });
             
             const blob = new Blob([csv], { type: 'text/csv' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `attendance_${className}_${date}.csv`;
-            a.click();
-            window.URL.revokeObjectURL(url);
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `attendance_${className}_${date}.csv`;
+            link.click();
+            URL.revokeObjectURL(link.href);
+            showAlert('CSV exported!', 'success');
         }
         
         function logout() {
