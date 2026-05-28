@@ -216,16 +216,20 @@ async function doLogin(){
   const u=document.getElementById('loginUser').value.trim();
   const p=document.getElementById('loginPass').value;
   if(!u||!p){showAlert('loginAlert','error','Enter username and password');return;}
-  const r=await fetch('/api/auth/admin/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p})});
-  const d=await r.json();
-  if(d.token){
-    localStorage.setItem('admin_token',d.token);
-    token=d.token;
-    document.getElementById('loginWrap').style.display='none';
-    document.getElementById('app').style.display='block';
-    init();
-  } else {
-    showAlert('loginAlert','error',d.error||'Login failed');
+  try {
+    const r=await fetch('/api/auth/admin/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p})});
+    const d=await r.json();
+    if(d.token){
+      localStorage.setItem('admin_token',d.token);
+      token=d.token;
+      document.getElementById('loginWrap').style.display='none';
+      document.getElementById('app').style.display='block';
+      init();
+    } else {
+      showAlert('loginAlert','error',d.error||'Login failed');
+    }
+  } catch(e) {
+    showAlert('loginAlert','error','Network error: '+e.message);
   }
 }
 
