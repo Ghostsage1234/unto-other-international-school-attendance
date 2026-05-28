@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendance Management - Unto Others School</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .nav {
+            background: white;
+            padding: 10px 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .nav a {
+            color: #667eea;
+            text-decoration: none;
+            margin-right: 20px;
+            padding: 5px 10px;
+            display: inline-block;
+            cursor: pointer;
+        }
+        .nav a:hover {
+            background: #667eea;
+            color: white;
+            border-radius: 5px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .controls {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            align-items: flex-end;
+        }
+        .control-group {
+            flex: 1;
+            min-width: 200px;
+        }
+        .control-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+        .control-group select, .control-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        .btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .btn-success {
+            background: #48bb78;
+        }
+        .btn-danger {
+            background: #e53e3e;
+        }
+        .btn-info {
+            background: #4299e1;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background: #667eea;
+            color: white;
+        }
+        .attendance-btn {
+            padding: 5px 15px;
+            margin: 0 5px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .btn-present {
+            background: #48bb78;
+            color: white;
+        }
+        .btn-absent {
+            background: #e53e3e;
+            color: white;
+        }
+        .btn-late {
+            background: #ed8936;
+            color: white;
+        }
+        .active-status {
+            box-shadow: 0 0 0 2px white, 0 0 0 4px #333;
+        }
+        .summary {
+            display: flex;
+            gap: 20px;
+            margin-top: 20px;
+            padding: 15px;
+            background: #f7fafc;
+            border-radius: 10px;
+        }
+        .summary-card {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            background: white;
+            border-radius: 5px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .summary-number {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .summary-label {
+            color: #666;
+            margin-top: 5px;
+        }
+        .logout-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            font-size: 18px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="school-info">
+            <h1>Unto Others International School</h1>
+            <p>Faith and Righteousness</p>
+        </div>
+        <div class="user-info">
+            <span id="userName">Loading...</span>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+    </div>
+    
+    <div class="nav">
+        <a onclick="location.href='dashboard.html'">Dashboard</a>
+        <a onclick="location.href='students.html'">Students</a>
+        <a onclick="location.href='teachers.html'">Teachers</a>
+        <a onclick="location.href='attendance.html'">Attendance</a>
+        <a onclick="location.href='fees.html'">Fees</a>
+    </div>
+    
+    <div class="container">
+        <h2>Attendance Management</h2>
+        
+        <div class="controls">
+            <div class="control-group">
+                <label>Select Class</label>
+                <select id="classSelect">
+                    <option value="">Select Class</option>
+                    <option value="Nursery 1">Nursery 1</option>
+                    <option value="Nursery 2">Nursery 2</option>
+                    <option value="KG 1">KG 1</option>
+                    <option value="KG 2">KG 2</option>
+                    <option value="Primary 1">Primary 1</option>
+                    <option value="Primary 2">Primary 2</option>
+                    <option value="Primary 3">Primary 3</option>
+                    <option value="Primary 4">Primary 4</option>
+                    <option value="Primary 5">Primary 5</option>
+                    <option value="Primary 6">Primary 6</option>
+                    <option value="JSS 1">JSS 1</option>
+                    <option value="JSS 2">JSS 2</option>
+                    <option value="JSS 3">JSS 3</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label>Select Date</label>
+                <input type="date" id="dateSelect">
+            </div>
+            <div class="control-group">
+                <button class="btn" onclick="loadAttendance()">Load Attendance</button>
+            </div>
+            <div class="control-group">
+                <button class="btn btn-success" onclick="saveAttendance()">Save Attendance</button>
+            </div>
+            <div class="control-group">
+                <button class="btn btn-info" onclick="exportToCSV()">Export to CSV</button>
+            </div>
+        </div>
+        
+        <div id="attendanceTable"></div>
+        
+        <div id="summary" class="summary" style="display: none;"></div>
+    </div>
+    
+    <script>
+        const token = localStorage.getItem('token');
+        if (!token) window.location.href = '/';
+        
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        document.getElementById('userName').textContent = user.fullname || user.username;
+        
+        // Set today's date as default
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('dateSelect').value = today;
+        
+        let students = [];
+        let currentAttendance = {};
+        
+        async function loadAttendance() {
+            const className = document.getElementById('classSelect').value;
+            const date = document.getElementById('dateSelect').value;
+            
+            if (!className) {
+                alert('Please select a class');
+                return;
+            }
+            
+            document.getElementById('attendanceTable').innerHTML = '<div class="loading">Loading students...</div>';
+            
+            try {
+                // Load students
+                const studentsResponse = await fetch(`/api/attendance/students/${encodeURIComponent(className)}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                students = await studentsResponse.json();
+                
+                // Load existing attendance for this date
+                const attendanceResponse = await fetch(`/api/attendance/${encodeURIComponent(className)}/${date}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                currentAttendance = await attendanceResponse.json();
+                
+                displayAttendanceTable();
+                loadSummary(className, date);
+            } catch (error) {
+                console.error('Error loading attendance:', error);
+                document.getElementById('attendanceTable').innerHTML = '<div class="loading">Error loading data</div>';
+            }
+        }
+        
+        function displayAttendanceTable() {
+            if (students.length === 0) {
+                document.getElementById('attendanceTable').innerHTML = '<div class="loading">No students found in this class</div>';
+                return;
+            }
+            
+            let html = `
+                <table>
+                    <thead>
+                        <tr><th>Student ID</th><th>Student Name</th><th>Attendance Status</th></tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            students.forEach(student => {
+                const status = currentAttendance[student.student_id] || '';
+                html += `
+                    <tr>
+                        <td>${student.student_id}</td>
+                        <td>${student.fullname}</td>
+                        <td>
+                            <button class="attendance-btn btn-present ${status === 'present' ? 'active-status' : ''}" onclick="setAttendance('${student.student_id}', 'present')">Present</button>
+                            <button class="attendance-btn btn-absent ${status === 'absent' ? 'active-status' : ''}" onclick="setAttendance('${student.student_id}', 'absent')">Absent</button>
+                            <button class="attendance-btn btn-late ${status === 'late' ? 'active-status' : ''}" onclick="setAttendance('${student.student_id}', 'late')">Late</button>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            html += '</tbody></table>';
+            document.getElementById('attendanceTable').innerHTML = html;
+        }
+        
+        function setAttendance(studentId, status) {
+            if (currentAttendance[studentId] === status) {
+                delete currentAttendance[studentId];
+            } else {
+                currentAttendance[studentId] = status;
+            }
+            displayAttendanceTable();
+        }
+        
+        async function saveAttendance() {
+            const className = document.getElementById('classSelect').value;
+            const date = document.getElementById('dateSelect').value;
+            
+            if (!className) {
+                alert('Please select a class');
+                return;
+            }
+            
+            const response = await fetch('/api/attendance', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    class: className,
+                    date: date,
+                    attendance: currentAttendance
+                })
+            });
+            
+            if (response.ok) {
+                alert('Attendance saved successfully!');
+                loadSummary(className, date);
+            } else {
+                const error = await response.json();
+                alert('Error: ' + error.error);
+            }
+        }
+        
+        async function loadSummary(className, date) {
+            const response = await fetch(`/api/attendance/summary/${date}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            if (response.ok) {
+                const summary = await response.json();
+                const summaryDiv = document.getElementById('summary');
+                summaryDiv.style.display = 'flex';
+                summaryDiv.innerHTML = `
+                    <div class="summary-card">
+                        <div class="summary-number" style="color: #48bb78;">${summary.present}</div>
+                        <div class="summary-label">Present</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-number" style="color: #e53e3e;">${summary.absent}</div>
+                        <div class="summary-label">Absent</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-number" style="color: #ed8936;">${summary.late}</div>
+                        <div class="summary-label">Late</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-number">${summary.present + summary.absent + summary.late}</div>
+                        <div class="summary-label">Total</div>
+                    </div>
+                `;
+            }
+        }
+        
+        function exportToCSV() {
+            if (students.length === 0) {
+                alert('No data to export');
+                return;
+            }
+            
+            const className = document.getElementById('classSelect').value;
+            const date = document.getElementById('dateSelect').value;
+            
+            let csv = 'Student ID,Student Name,Attendance Status\n';
+            students.forEach(student => {
+                const status = currentAttendance[student.student_id] || 'Not Marked';
+                csv += `${student.student_id},${student.fullname},${status}\n`;
+            });
+            
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `attendance_${className}_${date}.csv`;
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
+        
+        function logout() {
+            localStorage.clear();
+            window.location.href = '/';
+        }
+    </script>
+</body>
+</html>

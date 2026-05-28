@@ -331,3 +331,115 @@ app.delete('/api/teachers/:id', authenticateToken, requireAdmin, async (req, res
     res.status(500).json({ error: 'Failed to delete teacher.' });
   }
 });
+
+// ============ ATTENDANCE MODULE ============
+
+// Get students by class for attendance
+app.get('/api/attendance/students/:class', authenticateToken, async (req, res) => {
+  try {
+    const className = req.params.class;
+    const result = db.exec(
+      "SELECT id, student_id, fullname FROM students WHERE class = ? AND status = 'active' ORDER BY fullname",
+      [className]
+    );
+    
+    const students = result.length > 0 ? result[0].values.map(row => ({
+      id: row[0],
+      student_id: row[1],
+      fullname: row[2]
+    })) : [];
+    
+    res.json(students);
+  } catch (error) {
+    console.error('Get students for attendance error:', error);
+    res.status(500).json({ error: 'Failed to fetch students.' });
+  }
+});
+
+// Get attendance for a specific class and date
+app.get('/api/attendance/:class/:date', authenticateToken, async (req, res) => {
+  try {
+    const className = req.params.class;
+    const date = req.params.date;
+    
+    const result = db.exec(
+      "SELECT student_id, status FROM attendance WHERE class = ? AND date = ?",
+      [className, date]
+    );
+    
+    const attendance = {};
+    if (result.length > 0) {
+      result[0].values.forEach(row => {
+        attendance[row[0]] = row[1];
+      });
+    }
+    
+    res.json(attendance);
+  } catch (error) {
+    console.error('Get attendance error:', error);
+    res.status(500).json({ error: 'Failed to fetch attendance.' });
+  }
+});
+
+// Save attendance
+app.post('/api/attendance', authenticateToken, async (req, res) => {
+  const { class: className, date, attendance } = req.body;
+  
+  if (!className || !date || !attendance) {
+    return res.status(400).json({ error: 'Class, date, and attendance data required.' });
+  }
+  
+  try {
+    // Begin transaction
+    db.run("BEGIN TRANSACTION");
+    
+    // Delete existing attendance for this class/date
+    db.run("DELETE FROM attendance WHERE class = ? AND date = ?", [className, date]);
+    
+    // Insert new attendance records
+    for (const [studentId, status] of Object.entries(attendance)) {
+      if (status) {
+        db.run(
+          "INSERT INTO attendance (student_id, class, date, status, marked_by) VALUES (?, ?, ?, ?, ?)",
+          [studentId, className, date, status, req.user.id]
+        );
+      }
+    }
+    
+    db.run("COMMIT");
+    saveDatabase();
+    
+    res.json({ success: true, message: 'Attendance saved successfully.' });
+  } catch (error) {
+    db.run("ROLLBACK");
+    console.error('Save attendance error:', error);
+    res.status(500).json({ error: 'Failed to save attendance.' });
+  }
+});
+
+// Get attendance summary for dashboard
+app.get('/api/attendance/summary/:date', authenticateToken, async (req, res) => {
+  try {
+    const date = req.params.date;
+    const result = db.exec(
+      "SELECT status, COUNT(*) as count FROM attendance WHERE date = ? GROUP BY status",
+      [date]
+    );
+    
+    const summary = { present: 0, absent: 0, late: 0 };
+    if (result.length > 0) {
+      result[0].values.forEach(row => {
+        const status = row[0];
+        const count = row[1];
+        if (status === 'present') summary.present = count;
+        else if (status === 'absent') summary.absent = count;
+        else if (status === 'late') summary.late = count;
+      });
+    }
+    
+    res.json(summary);
+  } catch (error) {
+    console.error('Get attendance summary error:', error);
+    res.status(500).json({ error: 'Failed to fetch attendance summary.' });
+  }
+});
