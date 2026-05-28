@@ -750,68 +750,35 @@ async function savePay(){
 }
 
 async function printReceipt(sid,name,tid){
-  const student=await api('/api/student-balance/'+sid+'?term_Id='+tid).then(r=>r.json());
+  const d=await api(`/api/fees/student-balance/${sid}?term_id=${tid}`).then(r=>r.json());
   const settings=await api('/api/admin/settings').then(r=>r.json());
-  const payments=await api('/api/fees/payments?student_Id='+sid+'&term_Id='+tid).then(r=>r.json());
-  const rcptNo='RCP-'+tid+'-'+sid+'-'+Date.now().toString().slice(-4);
-  const sn=settings.school_name||'Unto Others International School';
-  const sm=settings.school_motto||'Faith and Righteousness';
-  const bal=Number(student.d_balance||0);
-  const w=window.open('','_blank','width=640,height=820');
-  const rows=payments.map((p,i)=>'<tr><td>'+(i+1)+'</td><td>'+p.payment_date+'</td><td>'+(p.label||'Fee Payment')+'</td><td>'+(p.payment_method||'-')+'</td><td style="text-align:right"><b>GH&#8373; '+Number(p.amount_paid).toLocaleString('en-GH',{minimumFractionDigits:2})+'</b></td></tr>').join('');
-  const noRows='<tr><td colspan="5" style="text-align:center;color:#999;padding:12px">No payments recorded</td></tr>';
-  w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Fee Receipt</title><style>'
-  +'*{margin:0;padding:0;box-sizing:border-box}'
-  +'body{font-family:Times New Roman,Times,serif;background:#fff;color:#111;padding:30px;max-width:580px;margin:auto}'
-  +'.hdr{text-align:center;border-bottom:3px double #4a0080;padding-bottom:12px;margin-bottom:16px}'
-  +'.logo{width:70px;height:70px;border-radius:50%;border:3px solid #f5c800;object-fit:cover}'
-  +'.sn{font-size:1.25em;font-weight:700;color:#4a0080;margin:6px 0 2px;text-transform:uppercase;letter-spacing:1px}'
-  +'.sm{font-size:0.78em;color:#666;font-style:italic;margin-bottom:4px}'
-  +'.dtitle{font-size:1em;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-top:8px;background:#4a0080;color:white;display:inline-block;padding:3px 18px;border-radius:3px}'
-  +'.meta{display:flex;justify-content:space-between;background:#f5f0ff;border:1px solid #d0bfff;border-radius:6px;padding:8px 14px;font-size:0.82em;margin-bottom:14px}'
-  +'.sbox{border:1px solid #ccc;border-radius:6px;padding:10px 14px;margin-bottom:14px;font-size:0.85em;display:grid;grid-template-columns:1fr 1fr;gap:5px}'
-  +'.lbl{color:#888;font-size:0.78em;text-transform:uppercase}'
-  +'.val{font-weight:700;color:#222}'
-  +'table{width:100%;border-collapse:collapse;font-size:0.83em;margin-bottom:14px}'
-  +'thead tr{background:#4a0080;color:white}'
-  +'thead th{padding:7px 10px;text-align:left}'
-  +'tbody tr:nth-child(even){background:#f9f6ff}'
-  +'tbody td{padding:6px 10px;border-bottom:1px solid #eee}'
-  +'.tbox{background:#f5f0ff;border:1px solid #d0bfff;border-radius:6px;padding:10px 14px;font-size:0.85em;margin-bottom:14px}'
-  +'.trow{display:flex;justify-content:space-between;padding:3px 0}'
-  +'.sig{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:24px;font-size:0.8em}'
-  +'.sline{border-top:1px solid #555;padding-top:4px;margin-top:28px;text-align:center;color:#555}'
-  +'.foot{text-align:center;font-size:0.72em;color:#999;margin-top:18px;border-top:1px solid #eee;padding-top:8px}'
-  +'.pbtn{display:block;margin:18px auto 0;padding:10px 32px;background:#4a0080;color:white;border:none;border-radius:6px;font-size:0.95em;cursor:pointer;letter-spacing:1px}'
-  +'@media print{.pbtn{display:none} body{padding:10px}}'
-  +'</style></head><body>'
-  +'<div class="hdr"><img src="/images/logo.jpeg" class="logo" onerror="this.style.display='none'">'
-  +'<div class="sn">'+sn+'</div><div class="sm">'+sm+'</div>'
-  +'<div class="dtitle">Official Fee Receipt</div></div>'
-  +'<div class="meta"><span><b>Receipt No:</b> '+rcptNo+'</span>'
-  +'<span><b>Date:</b> '+new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'})+'</span></div>'
-  +'<div class="sbox">'
-  +'<div><div class="lbl">Student Name</div><div class="val">'+(student.d_student&&student.d_student.full_name||name)+'</div></div>'
-  +'<div><div class="lbl">Adm. Number</div><div class="val">'+(student.d_student&&student.d_student.admission_number||'-')+'</div></div>'
-  +'<div><div class="lbl">Class</div><div class="val">'+(student.d_student&&student.d_student.class_name||'-')+'</div></div>'
-  +'<div><div class="lbl">Term</div><div class="val">'+(student.d_term&&student.d_term.name||'-')+'</div></div>'
-  +'</div>'
-  +'<table><thead><tr><th>#</th><th>Date</th><th>Description</th><th>Method</th><th style="text-align:right">Amount (GH&#8373;)</th></tr></thead>'
-  +'<tbody>'+(payments.length?rows:noRows)+'</tbody></table>'
-  +'<div class="tbox">'
-  +'<div class="trow"><span>Total Fee Charged:</span><span><b>GH&#8373; '+Number(student.d_totalFee||0).toLocaleString('en-GH',{minimumFractionDigits:2})+'</b></span></div>'
-  +'<div class="trow"><span>Total Paid:</span><span style="color:#2e7d32"><b>GH&#8373; '+Number(student.d_totalPaid||0).toLocaleString('en-GH',{minimumFractionDigits:2})+'</b></span></div>'
-  +'<div class="trow" style="border-top:1px solid #ccc;margin-top:6px;padding-top:6px"><span><b>Balance Outstanding:</b></span>'
-  +'<span style="font-weight:700;color:'+(bal<0?'#c62828':'#2e7d32')+'">GH&#8373; '+bal.toLocaleString('en-GH',{minimumFractionDigits:2})+'</span></div>'
-  +'</div>'
-  +'<div class="sig"><div><div class="sline">Cashier / Accounts Officer</div></div>'
-  +'<div><div class="sline">Parent / Guardian Signature</div></div></div>'
-  +'<div class="foot">This is an official receipt of '+sn+'. Please keep for your records.</div>'
-  +'<button class="pbtn" onclick="window.print()">Print Receipt</button>'
-  +'</body></html>');
-  w.document.close();
+  const w=window.open('','_blank','width=500,height=700');
+  const payments=await api(`/api/fees/payments?student_id=${sid}&term_id=${tid}`).then(r=>r.json());
+  w.document.write(`<!DOCTYPE html><html><body style="font-family:sans-serif;padding:24px;max-width:480px;margin:0 auto">
+    <div style="text-align:center;border-bottom:2px solid #4a0080;padding-bottom:14px;margin-bottom:14px">
+      <img src="/images/logo.jpeg" style="width:60px;height:60px;border-radius:50%;object-fit:cover;border:2px solid #f5c800">
+      <h2 style="color:#4a0080;margin:6px 0 2px;font-size:1.1em">${settings.school_name||'Unto Others International School'}</h2>
+      <p style="color:#888;font-size:0.8em;margin:0">${settings.school_motto||'Faith and Righteousness'}</p>
+      <h3 style="margin:10px 0 0;font-size:1em">FEE PAYMENT RECEIPT</h3>
+    </div>
+    <table style="width:100%;font-size:0.88em;margin-bottom:14px">
+      <tr><td><b>Student:</b></td><td>${d.student.full_name}</td></tr>
+      <tr><td><b>Admission:</b></td><td>${d.student.admission_number}</td></tr>
+      <tr><td><b>Class:</b></td><td>${d.student.class_name}</td></tr>
+    </table>
+    <table style="width:100%;border-collapse:collapse;font-size:0.85em;margin-bottom:14px">
+      <thead><tr style="background:#4a0080;color:white"><th style="padding:7px;text-align:left">Date</th><th style="padding:7px;text-align:left">Item</th><th style="padding:7px;text-align:left">Method</th><th style="padding:7px;text-align:right">Amount</th></tr></thead>
+      <tbody>${payments.map(p=>`<tr style="border-bottom:1px solid #eee"><td style="padding:6px">${p.payment_date}</td><td style="padding:6px">${p.label}</td><td style="padding:6px">${p.payment_method}</td><td style="padding:6px;text-align:right">${_currency}${Number(p.amount_paid).toLocaleString()}</td></tr>`).join('')}</tbody>
+    </table>
+    <div style="background:#f8f5ff;border-radius:8px;padding:12px;font-size:0.88em">
+      <div style="display:flex;justify-content:space-between"><span>Total Fee:</span><b>${_currency}${Number(d.totalFee).toLocaleString()}</b></div>
+      <div style="display:flex;justify-content:space-between"><span>Total Paid:</span><b style="color:#2e7d32">${_currency}${Number(d.totalPaid).toLocaleString()}</b></div>
+      <div style="display:flex;justify-content:space-between;border-top:1px solid #ddd;margin-top:6px;padding-top:6px"><span>Balance:</span><b style="color:${d.balance>0?'#c62828':'#2e7d32'}">${_currency}${Number(d.balance).toLocaleString()}</b></div>
+    </div>
+    <p style="text-align:center;color:#888;font-size:0.78em;margin-top:16px">Printed: ${new Date().toLocaleDateString()}</p>
+    <button onclick="window.print()" style="width:100%;padding:10px;background:#4a0080;color:white;border:none;border-radius:8px;cursor:pointer;margin-top:8px;font-size:1em">🖨️ Print Receipt</button>
+  </body></html>`);
 }
-
 // ── GRADES ────────────────────────────────────────────────
 async function loadGrades(){
   document.getElementById('tab-grades').innerHTML=`
