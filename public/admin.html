@@ -225,12 +225,17 @@ if(token){
 }
 
 async function doLogin(){
+  alert('doLogin called');
   const u=document.getElementById('loginUser').value.trim();
   const p=document.getElementById('loginPass').value;
+  alert('u='+u+' p='+p);
   if(!u||!p){alert('Enter username and password');return;}
   try{
+    alert('Fetching...');
     const r=await fetch('/api/auth/admin/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p})});
+    alert('Status: '+r.status);
     const d=await r.json();
+    alert('Response: '+JSON.stringify(d));
     if(d.token){
       localStorage.setItem('admin_token',d.token);
       token=d.token;
