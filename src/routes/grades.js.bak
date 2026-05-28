@@ -91,24 +91,4 @@ router.get('/class-result/:class_id/:term_id', requireTeacher, (req, res) => {
   res.json({ students: result, subjects });
 });
 
-
-router.get('/progress/:studentId', requireTeacher, (req, res) => {
-  const student = get('SELECT s.*, c.name as class_name FROM students s JOIN classes c ON c.id=s.class_id WHERE s.id=?', [req.params.studentId]);
-  if (!student) return res.status(404).json({ error: 'Student not found' });
-
-  const terms = all('SELECT * FROM terms ORDER BY id');
-  const subjects = all('SELECT DISTINCT sub.name as subject_name FROM grades g JOIN subjects sub ON sub.id=g.subject_id WHERE g.student_id=?', [req.params.studentId]);
-
-  const progressData = terms.map(term => {
-    const grades = all(
-      'SELECT sub.name as subject_name, g.total, g.grade, g.remark FROM grades g JOIN subjects sub ON sub.id=g.subject_id WHERE g.student_id=? AND g.term_id=?',
-      [req.params.studentId, term.id]
-    );
-    const avg = grades.length ? (grades.reduce((s, g) => s + g.total, 0) / grades.length).toFixed(1) : 0;
-    return { term: term.name, grades, average: avg };
-  }).filter(t => t.grades.length > 0);
-
-  res.json({ student, subjects, progressData });
-});
-
 module.exports = router;
