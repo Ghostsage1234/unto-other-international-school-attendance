@@ -1,44 +1,154 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Unto Others International School</title>
-<style>
-*{margin:0;padding:0;box-sizing:border-box;}
-body{font-family:'Segoe UI',sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#4a0080 0%,#1a237e 100%);}
-.wrap{text-align:center;padding:24px;width:90%;max-width:480px;}
-.logo{width:120px;height:120px;border-radius:50%;object-fit:cover;border:4px solid #f5c800;margin-bottom:20px;box-shadow:0 4px 20px rgba(0,0,0,0.3);}
-.logo-fallback{width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,0.15);border:4px solid #f5c800;display:flex;align-items:center;justify-content:center;font-size:3em;margin:0 auto 20px;}
-h1{color:white;font-size:1.6em;margin-bottom:8px;text-shadow:0 2px 4px rgba(0,0,0,0.3);}
-.motto{color:rgba(255,255,255,0.8);font-size:0.95em;margin-bottom:36px;font-style:italic;}
-.portals{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;}
-.portal{background:white;border-radius:16px;padding:28px 16px;text-decoration:none;color:#333;box-shadow:0 8px 32px rgba(0,0,0,0.2);transition:transform 0.2s,box-shadow 0.2s;display:block;}
-.portal:hover{transform:translateY(-4px);box-shadow:0 12px 40px rgba(0,0,0,0.3);}
-.portal .icon{font-size:2.8em;margin-bottom:12px;}
-.portal h3{color:#4a0080;font-size:1em;margin-bottom:6px;}
-.portal p{color:#888;font-size:0.78em;line-height:1.4;}
-.footer{color:rgba(255,255,255,0.4);font-size:0.75em;}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unto Others International School</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .login-container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+            width: 400px;
+        }
+        .school-logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .school-name {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+        }
+        .motto {
+            font-size: 14px;
+            color: #666;
+            font-style: italic;
+        }
+        h2 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        button:hover {
+            background: #5a67d8;
+        }
+        .error {
+            color: red;
+            text-align: center;
+            margin-top: 10px;
+            display: none;
+        }
+        .loading {
+            text-align: center;
+            margin-top: 10px;
+            display: none;
+        }
+    </style>
 </head>
 <body>
-<div class="wrap">
-  <img src="/images/logo.jpeg" class="logo" onerror="this.outerHTML='<div class=logo-fallback>🏫</div>'" alt="Logo">
-  <h1>Unto Others International School</h1>
-  <p class="motto">Faith and Righteousness</p>
-  <div class="portals">
-    <a href="/admin" class="portal">
-      <div class="icon">🔐</div>
-      <h3>Admin Portal</h3>
-      <p>Manage students, fees, grades & reports</p>
-    </a>
-    <a href="/teacher" class="portal">
-      <div class="icon">👨‍🏫</div>
-      <h3>Teacher Portal</h3>
-      <p>Attendance, grades & timetable</p>
-    </a>
-  </div>
-  <p class="footer">© 2025 Unto Others International School</p>
-</div>
+    <div class="login-container">
+        <div class="school-logo">
+            <div class="school-name">Unto Others International School</div>
+            <div class="motto">"Faith and Righteousness"</div>
+        </div>
+        <h2>Admin Login</h2>
+        <input type="text" id="username" placeholder="Username" value="admin">
+        <input type="password" id="password" placeholder="Password" value="password">
+        <button onclick="login()">Login</button>
+        <div class="error" id="errorMsg"></div>
+        <div class="loading" id="loading">Logging in...</div>
+    </div>
+
+    <script>
+        async function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const errorDiv = document.getElementById('errorMsg');
+            const loadingDiv = document.getElementById('loading');
+            
+            if (!username || !password) {
+                errorDiv.textContent = 'Please enter username and password';
+                errorDiv.style.display = 'block';
+                return;
+            }
+            
+            errorDiv.style.display = 'none';
+            loadingDiv.style.display = 'block';
+            
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    window.location.href = '/dashboard.html';
+                } else {
+                    errorDiv.textContent = data.error || 'Login failed';
+                    errorDiv.style.display = 'block';
+                }
+            } catch (error) {
+                errorDiv.textContent = 'Network error. Please try again.';
+                errorDiv.style.display = 'block';
+            } finally {
+                loadingDiv.style.display = 'none';
+            }
+        }
+        
+        // Check if already logged in
+        const token = localStorage.getItem('token');
+        if (token) {
+            fetch('/api/verify-token', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            }).then(res => {
+                if (res.ok) {
+                    window.location.href = '/dashboard.html';
+                }
+            });
+        }
+    </script>
 </body>
 </html>

@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Unto Others School</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .school-info h1 {
+            font-size: 20px;
+        }
+        .school-info p {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .logout-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .logout-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 36px;
+            font-weight: bold;
+            color: #667eea;
+            margin: 10px 0;
+        }
+        .stat-label {
+            color: #666;
+            font-size: 14px;
+        }
+        .welcome {
+            background: white;
+            margin: 20px;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="school-info">
+            <h1>Unto Others International School</h1>
+            <p>Faith and Righteousness</p>
+        </div>
+        <div class="user-info">
+            <span id="userName">Loading...</span>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+    </div>
+    
+    <div class="welcome">
+        <h2>Welcome to School Management System</h2>
+        <p>System is working correctly!</p>
+    </div>
+    
+    <div class="stats-container" id="stats">
+        <div class="stat-card">
+            <div class="stat-number" id="students">-</div>
+            <div class="stat-label">Total Students</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number" id="teachers">-</div>
+            <div class="stat-label">Total Teachers</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number" id="attendance">-</div>
+            <div class="stat-label">Today's Attendance</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number" id="classes">-</div>
+            <div class="stat-label">Classes</div>
+        </div>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('token');
+        
+        if (!token) {
+            window.location.href = '/';
+        }
+        
+        // Load user info
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        document.getElementById('userName').textContent = user.fullname || user.username;
+        
+        // Load dashboard stats
+        async function loadStats() {
+            try {
+                const response = await fetch('/api/dashboard/stats', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    if (response.status === 401 || response.status === 403) {
+                        localStorage.clear();
+                        window.location.href = '/';
+                    }
+                    return;
+                }
+                
+                const stats = await response.json();
+                document.getElementById('students').textContent = stats.students;
+                document.getElementById('teachers').textContent = stats.teachers;
+                document.getElementById('attendance').textContent = stats.todayAttendance;
+                document.getElementById('classes').textContent = stats.classes;
+            } catch (error) {
+                console.error('Failed to load stats:', error);
+            }
+        }
+        
+        function logout() {
+            localStorage.clear();
+            window.location.href = '/';
+        }
+        
+        loadStats();
+    </script>
+</body>
+</html>

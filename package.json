@@ -1,25 +1,17 @@
 {
   "name": "unto-others-school",
-  "version": "3.0.0",
-  "description": "Unto Others International School Management System",
-  "main": "src/server.js",
+  "version": "1.0.0",
+  "type": "module",
   "scripts": {
-    "start": "node src/server.js"
-  },
-  "engines": {
-    "node": ">=18.0.0"
+    "start": "node server.js"
   },
   "dependencies": {
-    "bcryptjs": "^3.0.3",
+    "express": "^4.18.2",
+    "sql.js": "^1.10.3",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2",
     "cors": "^2.8.5",
-    "dotenv": "^16.0.0",
-    "express": "^5.2.1",
-    "express-rate-limit": "^8.5.2",
-    "express-slow-down": "^3.1.0",
-    "helmet": "^8.2.0",
-    "jsonwebtoken": "^9.0.3",
-    "node-cron": "^3.0.0",
-    "qrcode": "^1.5.3",
-    "sql.js": "^1.10.2"
+    "dotenv": "^16.3.1",
+    "uuid": "^9.0.1"
   }
 }

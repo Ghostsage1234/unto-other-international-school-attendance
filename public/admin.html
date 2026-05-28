@@ -100,7 +100,7 @@ tr:hover td{background:#faf5ff;}
 <!-- LOGIN -->
 <div class="login-wrap" id="loginWrap">
   <div class="login-box">
-    <img src="/images/logo.jpeg" class="login-logo" onerror="this.style.display='none'" alt="Logo">
+    <img src="/images/logo.jpeg" class="login-logo" onerror="this.style.display=\'none\'" alt="Logo">
     <h2>🔐 Admin Login</h2>
     <p>Unto Others International School</p>
     <div id="loginAlert"></div>
@@ -167,7 +167,7 @@ tr:hover td{background:#faf5ff;}
 <div id="app" style="display:none">
   <div class="topbar no-print">
     <div class="topbar-left">
-      <img src="/images/logo.jpeg" onerror="this.style.display='none'" alt="">
+      <img src="/images/logo.jpeg" onerror="this.style.display=\'none\'" alt="">
       <div><div class="topbar-title">Unto Others International School</div><div class="topbar-sub">Admin Portal</div></div>
     </div>
     <div style="display:flex;align-items:center;gap:8px;">
@@ -259,7 +259,7 @@ async function init(){
   ]);
   _classes=cr||[];
   _terms=tr||[];
-  _currency=sr?.currency_symbol||'GH₵';
+  _currency=sr?.currency_symbol||'GH\u20b5';
   const ct=await api('/api/admin/current-term').then(r=>r.json());
   document.getElementById('termBadge').textContent='📅 '+(ct?.name||'No Term');
   loadDashboard();
@@ -789,7 +789,7 @@ async function printReceipt(sid,name,tid){
   +'.pbtn{display:block;margin:18px auto 0;padding:10px 32px;background:#4a0080;color:white;border:none;border-radius:6px;font-size:0.95em;cursor:pointer;letter-spacing:1px}'
   +'@media print{.pbtn{display:none} body{padding:10px}}'
   +'</style></head><body>'
-  +'<div class="hdr"><img src="/images/logo.jpeg" class="logo" onerror="this.style.display='none'">'
+  +'<div class="hdr"><img src="/images/logo.jpeg" class="logo" onerror="this.style.display=\'none\'">'
   +'<div class="sn">'+sn+'</div><div class="sm">'+sm+'</div>'
   +'<div class="dtitle">Official Fee Receipt</div></div>'
   +'<div class="meta"><span><b>Receipt No:</b> '+rcptNo+'</span>'
@@ -1040,7 +1040,7 @@ function printTimetable(){
   +'@media print{.pbtn{display:none} body{padding:10px}}'
   +'</style></head><body>'
   +'<div class="hdr">'
-  +'<img src="/images/logo.jpeg" class="logo" onerror="this.style.display='none'">'
+  +'<img src="/images/logo.jpeg" class="logo" onerror="this.style.display=\'none\'">'
   +'<div class="sn">'+settings_sn+'</div>'
   +'<div class="sm">Faith and Righteousness</div>'
   +'<div class="doctitle">Class Timetable</div>'
@@ -1157,7 +1157,7 @@ async function showReportCard(){
   +'@media print{.pbtn{display:none} body{padding:10px}}'
   +'</style></head><body>'
   +'<div class="hdr">'
-  +'<img src="/images/logo.jpeg" class="logo" onerror="this.style.display='none'">'
+  +'<img src="/images/logo.jpeg" class="logo" onerror="this.style.display=\'none\'">'
   +'<div class="sn">'+sn+'</div>'
   +'<div class="sm">'+sm+'</div>'
   +'<div class="doctitle">Student Report Card</div>'
@@ -1247,7 +1247,7 @@ async function showClassResult(){
   +'@media print{.pbtn{display:none} body{padding:8px} table{font-size:0.75em}}'
   +'</style></head><body>'
   +'<div class="hdr">'
-  +'<img src="/images/logo.jpeg" class="logo" onerror="this.style.display='none'">'
+  +'<img src="/images/logo.jpeg" class="logo" onerror="this.style.display=\'none\'">'
   +'<div class="sn">Unto Others International School</div>'
   +'<div class="sm">Faith and Righteousness</div>'
   +'<div class="doctitle">Class Result Sheet</div>'
@@ -1299,7 +1299,7 @@ async function generateIDCards(){
       +'">'
       +'<div style="position:absolute;top:0;left:0;right:0;height:14px;background:#4a0080"></div>'
       +'<div style="margin-top:14px;width:100%;display:flex;align-items:center;gap:6px">'
-      +'<img src="/images/logo.jpeg" style="width:32px;height:32px;border-radius:50%;border:2px solid #f5c800;object-fit:cover" onerror="this.style.display='none'">'
+      +'<img src="/images/logo.jpeg" style="width:32px;height:32px;border-radius:50%;border:2px solid #f5c800;object-fit:cover" onerror="this.style.display=\'none\'">'
       +'<div style="flex:1">'
       +'<div style="font-size:6.5px;font-weight:700;color:#4a0080;text-transform:uppercase;letter-spacing:0.5px;line-height:1.2">Unto Others International School</div>'
       +'<div style="font-size:5.5px;color:#666;font-style:italic">Faith and Righteousness</div>'
@@ -1462,7 +1462,7 @@ async function loadSettings(){
         <div class="fg"><label>Email</label><input id="set_email" value="${d.school_email||''}"></div>
       </div>
       <div class="fg"><label>Address</label><input id="set_address" value="${d.school_address||''}"></div>
-      <div class="fg"><label>Currency Symbol</label><input id="set_currency" value="${d.currency_symbol||'GH₵'}"></div>
+      <div class="fg"><label>Currency Symbol</label><input id="set_currency" value="${d.currency_symbol||'GH\u20b5'}"></div>
       <div id="setAlert"></div>
       <button class="btn btn-primary" style="width:auto;padding:10px 20px" onclick="saveSettings()">💾 Save Settings</button>
     </div>
