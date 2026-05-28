@@ -21,15 +21,6 @@ async function initDB() {
   }
   saveDB();
   console.log('✅ Database ready at', DB_PATH);
-  // Seed default admin if not exists
-  const bcrypt = require('bcryptjs');
-  const existingAdmin = get('SELECT id FROM admins WHERE username=?', ['admin']);
-  if (!existingAdmin) {
-    const hash = bcrypt.hashSync('password', 10);
-    run('INSERT INTO admins (username, password, full_name) VALUES (?,?,?)', ['admin', hash, 'School Administrator']);
-    console.log('Default admin created');
-  }
-
   return db;
 }
 
