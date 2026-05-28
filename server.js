@@ -152,3 +152,182 @@ async function startServer() {
 }
 
 startServer().catch(console.error);
+
+// ============ STUDENTS MODULE ============
+
+// Get all students
+app.get('/api/students', authenticateToken, async (req, res) => {
+  try {
+    const classFilter = req.query.class;
+    let query = "SELECT * FROM students WHERE status = 'active'";
+    let params = [];
+    
+    if (classFilter) {
+      query += " AND class = ?";
+      params.push(classFilter);
+    }
+    
+    query += " ORDER BY fullname";
+    const result = db.exec(query, params);
+    
+    const students = result.length > 0 ? result[0].values.map(row => ({
+      id: row[0],
+      student_id: row[1],
+      fullname: row[2],
+      class: row[3],
+      gender: row[4],
+      dob: row[5],
+      address: row[6],
+      parent_phone: row[7],
+      enrollment_date: row[8],
+      status: row[9]
+    })) : [];
+    
+    res.json(students);
+  } catch (error) {
+    console.error('Get students error:', error);
+    res.status(500).json({ error: 'Failed to fetch students.' });
+  }
+});
+
+// Add new student
+app.post('/api/students', authenticateToken, requireAdmin, async (req, res) => {
+  const { fullname, class: className, gender, dob, address, parent_phone } = req.body;
+  
+  if (!fullname || !className) {
+    return res.status(400).json({ error: 'Fullname and class are required.' });
+  }
+  
+  try {
+    // Generate student ID (e.g., STU2024001)
+    const countResult = db.exec("SELECT COUNT(*) as count FROM students");
+    const count = countResult[0]?.values[0]?.[0] || 0;
+    const studentId = `STU${new Date().getFullYear()}${String(count + 1).padStart(4, '0')}`;
+    
+    db.run(
+      "INSERT INTO students (student_id, fullname, class, gender, dob, address, parent_phone) VALUES (?, ?, ?, ?, ?, ?, ?)",
+      [studentId, fullname, className, gender || '', dob || '', address || '', parent_phone || '']
+    );
+    saveDatabase();
+    
+    res.json({ success: true, student_id: studentId, message: 'Student added successfully.' });
+  } catch (error) {
+    console.error('Add student error:', error);
+    res.status(500).json({ error: 'Failed to add student.' });
+  }
+});
+
+// Update student
+app.put('/api/students/:id', authenticateToken, requireAdmin, async (req, res) => {
+  const { id } = req.params;
+  const { fullname, class: className, gender, dob, address, parent_phone } = req.body;
+  
+  try {
+    db.run(
+      "UPDATE students SET fullname = ?, class = ?, gender = ?, dob = ?, address = ?, parent_phone = ? WHERE id = ?",
+      [fullname, className, gender, dob, address, parent_phone, id]
+    );
+    saveDatabase();
+    res.json({ success: true, message: 'Student updated successfully.' });
+  } catch (error) {
+    console.error('Update student error:', error);
+    res.status(500).json({ error: 'Failed to update student.' });
+  }
+});
+
+// Delete student (soft delete)
+app.delete('/api/students/:id', authenticateToken, requireAdmin, async (req, res) => {
+  const { id } = req.params;
+  
+  try {
+    db.run("UPDATE students SET status = 'inactive' WHERE id = ?", [id]);
+    saveDatabase();
+    res.json({ success: true, message: 'Student deleted successfully.' });
+  } catch (error) {
+    console.error('Delete student error:', error);
+    res.status(500).json({ error: 'Failed to delete student.' });
+  }
+});
+
+// ============ TEACHERS MODULE ============
+
+// Get all teachers
+app.get('/api/teachers', authenticateToken, async (req, res) => {
+  try {
+    const result = db.exec("SELECT * FROM teachers WHERE status = 'active' ORDER BY fullname");
+    
+    const teachers = result.length > 0 ? result[0].values.map(row => ({
+      id: row[0],
+      teacher_id: row[1],
+      fullname: row[2],
+      email: row[3],
+      phone: row[4],
+      subjects: row[5],
+      hire_date: row[6],
+      status: row[7]
+    })) : [];
+    
+    res.json(teachers);
+  } catch (error) {
+    console.error('Get teachers error:', error);
+    res.status(500).json({ error: 'Failed to fetch teachers.' });
+  }
+});
+
+// Add new teacher
+app.post('/api/teachers', authenticateToken, requireAdmin, async (req, res) => {
+  const { fullname, email, phone, subjects } = req.body;
+  
+  if (!fullname) {
+    return res.status(400).json({ error: 'Fullname is required.' });
+  }
+  
+  try {
+    const countResult = db.exec("SELECT COUNT(*) as count FROM teachers");
+    const count = countResult[0]?.values[0]?.[0] || 0;
+    const teacherId = `TCH${new Date().getFullYear()}${String(count + 1).padStart(4, '0')}`;
+    
+    db.run(
+      "INSERT INTO teachers (teacher_id, fullname, email, phone, subjects) VALUES (?, ?, ?, ?, ?)",
+      [teacherId, fullname, email || '', phone || '', subjects || '']
+    );
+    saveDatabase();
+    
+    res.json({ success: true, teacher_id: teacherId, message: 'Teacher added successfully.' });
+  } catch (error) {
+    console.error('Add teacher error:', error);
+    res.status(500).json({ error: 'Failed to add teacher.' });
+  }
+});
+
+// Update teacher
+app.put('/api/teachers/:id', authenticateToken, requireAdmin, async (req, res) => {
+  const { id } = req.params;
+  const { fullname, email, phone, subjects } = req.body;
+  
+  try {
+    db.run(
+      "UPDATE teachers SET fullname = ?, email = ?, phone = ?, subjects = ? WHERE id = ?",
+      [fullname, email, phone, subjects, id]
+    );
+    saveDatabase();
+    res.json({ success: true, message: 'Teacher updated successfully.' });
+  } catch (error) {
+    console.error('Update teacher error:', error);
+    res.status(500).json({ error: 'Failed to update teacher.' });
+  }
+});
+
+// Delete teacher
+app.delete('/api/teachers/:id', authenticateToken, requireAdmin, async (req, res) => {
+  const { id } = req.params;
+  
+  try {
+    db.run("UPDATE teachers SET status = 'inactive' WHERE id = ?", [id]);
+    saveDatabase();
+    res.json({ success: true, message: 'Teacher deleted successfully.' });
+  } catch (error) {
+    console.error('Delete teacher error:', error);
+    res.status(500).json({ error: 'Failed to delete teacher.' });
+  }
+});
