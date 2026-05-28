@@ -443,3 +443,93 @@ app.get('/api/attendance/summary/:date', authenticateToken, async (req, res) => 
     res.status(500).json({ error: 'Failed to fetch attendance summary.' });
   }
 });
+
+// ============ CLASSES & SUBJECTS MODULE ============
+
+// Get all classes
+app.get('/api/classes', authenticateToken, async (req, res) => {
+  const classes = [
+    'Nursery 1', 'Nursery 2', 'KG 1', 'KG 2',
+    'Primary 1', 'Primary 2', 'Primary 3', 'Primary 4', 'Primary 5', 'Primary 6',
+    'JSS 1', 'JSS 2', 'JSS 3'
+  ];
+  res.json(classes);
+});
+
+// Get subjects for a class
+app.get('/api/classes/:className/subjects', authenticateToken, async (req, res) => {
+  const className = req.params.className;
+  
+  // Check if subjects table exists, if not create it
+  db.run(`
+    CREATE TABLE IF NOT EXISTS class_subjects (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      class_name TEXT NOT NULL,
+      subject_name TEXT NOT NULL,
+      UNIQUE(class_name, subject_name)
+    )
+  `);
+  
+  const result = db.exec(
+    "SELECT subject_name FROM class_subjects WHERE class_name = ? ORDER BY subject_name",
+    [className]
+  );
+  
+  const subjects = result.length > 0 ? result[0].values.map(row => row[0]) : [];
+  res.json(subjects);
+});
+
+// Add subject to a class
+app.post('/api/classes/:className/subjects', authenticateToken, requireAdmin, async (req, res) => {
+  const className = req.params.className;
+  const { subject_name } = req.body;
+  
+  if (!subject_name) {
+    return res.status(400).json({ error: 'Subject name is required.' });
+  }
+  
+  try {
+    db.run(
+      "INSERT OR IGNORE INTO class_subjects (class_name, subject_name) VALUES (?, ?)",
+      [className, subject_name]
+    );
+    saveDatabase();
+    res.json({ success: true, message: 'Subject added successfully.' });
+  } catch (error) {
+    console.error('Add subject error:', error);
+    res.status(500).json({ error: 'Failed to add subject.' });
+  }
+});
+
+// Remove subject from a class
+app.delete('/api/classes/:className/subjects/:subjectName', authenticateToken, requireAdmin, async (req, res) => {
+  const { className, subjectName } = req.params;
+  
+  try {
+    db.run(
+      "DELETE FROM class_subjects WHERE class_name = ? AND subject_name = ?",
+      [className, decodeURIComponent(subjectName)]
+    );
+    saveDatabase();
+    res.json({ success: true, message: 'Subject removed successfully.' });
+  } catch (error) {
+    console.error('Remove subject error:', error);
+    res.status(500).json({ error: 'Failed to remove subject.' });
+  }
+});
+
+// Get all subjects across all classes (for dropdowns)
+app.get('/api/all-subjects', authenticateToken, async (req, res) => {
+  db.run(`
+    CREATE TABLE IF NOT EXISTS class_subjects (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      class_name TEXT NOT NULL,
+      subject_name TEXT NOT NULL,
+      UNIQUE(class_name, subject_name)
+    )
+  `);
+  
+  const result = db.exec("SELECT DISTINCT subject_name FROM class_subjects ORDER BY subject_name");
+  const subjects = result.length > 0 ? result[0].values.map(row => row[0]) : [];
+  res.json(subjects);
+});

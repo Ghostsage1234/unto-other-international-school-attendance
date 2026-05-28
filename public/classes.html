@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Classes & Subjects - Unto Others School</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .nav {
+            background: white;
+            padding: 10px 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .nav a {
+            color: #667eea;
+            text-decoration: none;
+            margin-right: 20px;
+            padding: 5px 10px;
+            display: inline-block;
+            cursor: pointer;
+        }
+        .nav a:hover {
+            background: #667eea;
+            color: white;
+            border-radius: 5px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 20px auto;
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 20px;
+        }
+        .sidebar {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .main-content {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .class-list {
+            list-style: none;
+        }
+        .class-list li {
+            padding: 10px;
+            margin: 5px 0;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: all 0.3s;
+        }
+        .class-list li:hover {
+            background: #e2e8f0;
+        }
+        .class-list li.active {
+            background: #667eea;
+            color: white;
+        }
+        .subjects-list {
+            list-style: none;
+            margin-top: 20px;
+        }
+        .subjects-list li {
+            padding: 10px;
+            margin: 5px 0;
+            background: #f7fafc;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .btn-danger {
+            background: #e53e3e;
+            padding: 5px 10px;
+            font-size: 12px;
+        }
+        .btn-success {
+            background: #48bb78;
+        }
+        .add-subject {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+        }
+        .add-subject input {
+            width: 70%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-right: 10px;
+        }
+        .logout-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        h3 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+        .empty-message {
+            color: #999;
+            text-align: center;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="school-info">
+            <h1>Unto Others International School</h1>
+            <p>Faith and Righteousness</p>
+        </div>
+        <div class="user-info">
+            <span id="userName">Loading...</span>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+    </div>
+    
+    <div class="nav">
+        <a onclick="location.href='dashboard.html'">Dashboard</a>
+        <a onclick="location.href='students.html'">Students</a>
+        <a onclick="location.href='teachers.html'">Teachers</a>
+        <a onclick="location.href='attendance.html'">Attendance</a>
+        <a onclick="location.href='classes.html'">Classes</a>
+        <a onclick="location.href='fees.html'">Fees</a>
+    </div>
+    
+    <div class="container">
+        <div class="sidebar">
+            <h3>Classes</h3>
+            <ul class="class-list" id="classList"></ul>
+        </div>
+        
+        <div class="main-content">
+            <h3 id="selectedClassTitle">Select a Class</h3>
+            <div id="subjectsContent"></div>
+        </div>
+    </div>
+    
+    <script>
+        const token = localStorage.getItem('token');
+        if (!token) window.location.href = '/';
+        
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        document.getElementById('userName').textContent = user.fullname || user.username;
+        
+        let currentClass = null;
+        
+        const classes = [
+            'Nursery 1', 'Nursery 2', 'KG 1', 'KG 2',
+            'Primary 1', 'Primary 2', 'Primary 3', 'Primary 4', 'Primary 5', 'Primary 6',
+            'JHS 1', 'JHS 2', 'JHS 3'
+        ];
+        
+        function displayClasses() {
+            const classList = document.getElementById('classList');
+            classList.innerHTML = '';
+            
+            classes.forEach(className => {
+                const li = document.createElement('li');
+                li.textContent = className;
+                li.onclick = () => selectClass(className);
+                classList.appendChild(li);
+            });
+        }
+        
+        async function selectClass(className) {
+            currentClass = className;
+            
+            // Update active state in sidebar
+            document.querySelectorAll('.class-list li').forEach(li => {
+                li.classList.remove('active');
+                if (li.textContent === className) {
+                    li.classList.add('active');
+                }
+            });
+            
+            document.getElementById('selectedClassTitle').textContent = `${className} - Subjects`;
+            
+            // Load subjects for this class
+            const response = await fetch(`/api/classes/${encodeURIComponent(className)}/subjects`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            const subjects = await response.json();
+            displaySubjects(subjects);
+        }
+        
+        function displaySubjects(subjects) {
+            const content = document.getElementById('subjectsContent');
+            
+            if (subjects.length === 0) {
+                content.innerHTML = '<div class="empty-message">No subjects added yet. Add subjects below.</div>';
+            } else {
+                let html = '<ul class="subjects-list">';
+                subjects.forEach(subject => {
+                    html += `
+                        <li>
+                            <span>${subject}</span>
+                            <button class="btn btn-danger" onclick="removeSubject('${subject}')">Remove</button>
+                        </li>
+                    `;
+                });
+                html += '</ul>';
+                content.innerHTML = html;
+            }
+            
+            // Add subject form
+            content.innerHTML += `
+                <div class="add-subject">
+                    <h4>Add New Subject</h4>
+                    <input type="text" id="newSubject" placeholder="Subject name (e.g., Mathematics, English, Science)">
+                    <button class="btn btn-success" onclick="addSubject()">Add Subject</button>
+                </div>
+            `;
+        }
+        
+        async function addSubject() {
+            const subjectName = document.getElementById('newSubject').value.trim();
+            
+            if (!subjectName) {
+                alert('Please enter a subject name');
+                return;
+            }
+            
+            const response = await fetch(`/api/classes/${encodeURIComponent(currentClass)}/subjects`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ subject_name: subjectName })
+            });
+            
+            if (response.ok) {
+                document.getElementById('newSubject').value = '';
+                selectClass(currentClass);
+                alert('Subject added successfully!');
+            } else {
+                const error = await response.json();
+                alert('Error: ' + error.error);
+            }
+        }
+        
+        async function removeSubject(subjectName) {
+            if (confirm(`Remove "${subjectName}" from ${currentClass}?`)) {
+                const response = await fetch(`/api/classes/${encodeURIComponent(currentClass)}/subjects/${encodeURIComponent(subjectName)}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (response.ok) {
+                    selectClass(currentClass);
+                    alert('Subject removed successfully!');
+                } else {
+                    alert('Error removing subject');
+                }
+            }
+        }
+        
+        function logout() {
+            localStorage.clear();
+            window.location.href = '/';
+        }
+        
+        displayClasses();
+    </script>
+</body>
+</html>
