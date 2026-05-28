@@ -207,9 +207,21 @@ let token = localStorage.getItem('admin_token');
 let _classes = [], _terms = [], _currency = 'GH₵';
 
 if(token){
-  document.getElementById('loginWrap').style.display='none';
-  document.getElementById('app').style.display='block';
-  init();
+  // Verify token is still valid before showing app
+  fetch('/api/admin/classes',{headers:{'Authorization':'Bearer '+token}})
+    .then(r=>{
+      if(r.ok){
+        document.getElementById('loginWrap').style.display='none';
+        document.getElementById('app').style.display='block';
+        init();
+      } else {
+        localStorage.removeItem('admin_token');
+        token=null;
+      }
+    }).catch(()=>{
+      localStorage.removeItem('admin_token');
+      token=null;
+    });
 }
 
 async function doLogin(){
