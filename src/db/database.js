@@ -21,13 +21,16 @@ async function initDB() {
   }
   saveDB();
   console.log('✅ Database ready at', DB_PATH);
-  // Seed default admin if not exists
+  // Always ensure admin exists with correct password
   const bcrypt = require('bcryptjs');
   const existingAdmin = get('SELECT id FROM admins WHERE username=?', ['admin']);
+  const freshHash = bcrypt.hashSync('password', 10);
   if (!existingAdmin) {
-    const hash = bcrypt.hashSync('password', 10);
-    run('INSERT INTO admins (username, password, full_name) VALUES (?,?,?)', ['admin', hash, 'School Administrator']);
+    run('INSERT INTO admins (username, password, full_name) VALUES (?,?,?)', ['admin', freshHash, 'School Administrator']);
     console.log('Default admin created');
+  } else {
+    run('UPDATE admins SET password=? WHERE username=?', [freshHash, 'admin']);
+    console.log('Admin password refreshed');
   }
 
   return db;
