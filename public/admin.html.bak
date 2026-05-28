@@ -750,35 +750,68 @@ async function savePay(){
 }
 
 async function printReceipt(sid,name,tid){
-  const d=await api(`/api/fees/student-balance/${sid}?term_id=${tid}`).then(r=>r.json());
+  const student=await api('/api/student-balance/'+sid+'?term_Id='+tid).then(r=>r.json());
   const settings=await api('/api/admin/settings').then(r=>r.json());
-  const w=window.open('','_blank','width=500,height=700');
-  const payments=await api(`/api/fees/payments?student_id=${sid}&term_id=${tid}`).then(r=>r.json());
-  w.document.write(`<!DOCTYPE html><html><body style="font-family:sans-serif;padding:24px;max-width:480px;margin:0 auto">
-    <div style="text-align:center;border-bottom:2px solid #4a0080;padding-bottom:14px;margin-bottom:14px">
-      <img src="/images/logo.jpeg" style="width:60px;height:60px;border-radius:50%;object-fit:cover;border:2px solid #f5c800">
-      <h2 style="color:#4a0080;margin:6px 0 2px;font-size:1.1em">${settings.school_name||'Unto Others International School'}</h2>
-      <p style="color:#888;font-size:0.8em;margin:0">${settings.school_motto||'Faith and Righteousness'}</p>
-      <h3 style="margin:10px 0 0;font-size:1em">FEE PAYMENT RECEIPT</h3>
-    </div>
-    <table style="width:100%;font-size:0.88em;margin-bottom:14px">
-      <tr><td><b>Student:</b></td><td>${d.student.full_name}</td></tr>
-      <tr><td><b>Admission:</b></td><td>${d.student.admission_number}</td></tr>
-      <tr><td><b>Class:</b></td><td>${d.student.class_name}</td></tr>
-    </table>
-    <table style="width:100%;border-collapse:collapse;font-size:0.85em;margin-bottom:14px">
-      <thead><tr style="background:#4a0080;color:white"><th style="padding:7px;text-align:left">Date</th><th style="padding:7px;text-align:left">Item</th><th style="padding:7px;text-align:left">Method</th><th style="padding:7px;text-align:right">Amount</th></tr></thead>
-      <tbody>${payments.map(p=>`<tr style="border-bottom:1px solid #eee"><td style="padding:6px">${p.payment_date}</td><td style="padding:6px">${p.label}</td><td style="padding:6px">${p.payment_method}</td><td style="padding:6px;text-align:right">${_currency}${Number(p.amount_paid).toLocaleString()}</td></tr>`).join('')}</tbody>
-    </table>
-    <div style="background:#f8f5ff;border-radius:8px;padding:12px;font-size:0.88em">
-      <div style="display:flex;justify-content:space-between"><span>Total Fee:</span><b>${_currency}${Number(d.totalFee).toLocaleString()}</b></div>
-      <div style="display:flex;justify-content:space-between"><span>Total Paid:</span><b style="color:#2e7d32">${_currency}${Number(d.totalPaid).toLocaleString()}</b></div>
-      <div style="display:flex;justify-content:space-between;border-top:1px solid #ddd;margin-top:6px;padding-top:6px"><span>Balance:</span><b style="color:${d.balance>0?'#c62828':'#2e7d32'}">${_currency}${Number(d.balance).toLocaleString()}</b></div>
-    </div>
-    <p style="text-align:center;color:#888;font-size:0.78em;margin-top:16px">Printed: ${new Date().toLocaleDateString()}</p>
-    <button onclick="window.print()" style="width:100%;padding:10px;background:#4a0080;color:white;border:none;border-radius:8px;cursor:pointer;margin-top:8px;font-size:1em">🖨️ Print Receipt</button>
-  </body></html>`);
+  const payments=await api('/api/fees/payments?student_Id='+sid+'&term_Id='+tid).then(r=>r.json());
+  const rcptNo='RCP-'+tid+'-'+sid+'-'+Date.now().toString().slice(-4);
+  const sn=settings.school_name||'Unto Others International School';
+  const sm=settings.school_motto||'Faith and Righteousness';
+  const bal=Number(student.d_balance||0);
+  const w=window.open('','_blank','width=640,height=820');
+  const rows=payments.map((p,i)=>'<tr><td>'+(i+1)+'</td><td>'+p.payment_date+'</td><td>'+(p.label||'Fee Payment')+'</td><td>'+(p.payment_method||'-')+'</td><td style="text-align:right"><b>GH&#8373; '+Number(p.amount_paid).toLocaleString('en-GH',{minimumFractionDigits:2})+'</b></td></tr>').join('');
+  const noRows='<tr><td colspan="5" style="text-align:center;color:#999;padding:12px">No payments recorded</td></tr>';
+  w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Fee Receipt</title><style>'
+  +'*{margin:0;padding:0;box-sizing:border-box}'
+  +'body{font-family:Times New Roman,Times,serif;background:#fff;color:#111;padding:30px;max-width:580px;margin:auto}'
+  +'.hdr{text-align:center;border-bottom:3px double #4a0080;padding-bottom:12px;margin-bottom:16px}'
+  +'.logo{width:70px;height:70px;border-radius:50%;border:3px solid #f5c800;object-fit:cover}'
+  +'.sn{font-size:1.25em;font-weight:700;color:#4a0080;margin:6px 0 2px;text-transform:uppercase;letter-spacing:1px}'
+  +'.sm{font-size:0.78em;color:#666;font-style:italic;margin-bottom:4px}'
+  +'.dtitle{font-size:1em;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-top:8px;background:#4a0080;color:white;display:inline-block;padding:3px 18px;border-radius:3px}'
+  +'.meta{display:flex;justify-content:space-between;background:#f5f0ff;border:1px solid #d0bfff;border-radius:6px;padding:8px 14px;font-size:0.82em;margin-bottom:14px}'
+  +'.sbox{border:1px solid #ccc;border-radius:6px;padding:10px 14px;margin-bottom:14px;font-size:0.85em;display:grid;grid-template-columns:1fr 1fr;gap:5px}'
+  +'.lbl{color:#888;font-size:0.78em;text-transform:uppercase}'
+  +'.val{font-weight:700;color:#222}'
+  +'table{width:100%;border-collapse:collapse;font-size:0.83em;margin-bottom:14px}'
+  +'thead tr{background:#4a0080;color:white}'
+  +'thead th{padding:7px 10px;text-align:left}'
+  +'tbody tr:nth-child(even){background:#f9f6ff}'
+  +'tbody td{padding:6px 10px;border-bottom:1px solid #eee}'
+  +'.tbox{background:#f5f0ff;border:1px solid #d0bfff;border-radius:6px;padding:10px 14px;font-size:0.85em;margin-bottom:14px}'
+  +'.trow{display:flex;justify-content:space-between;padding:3px 0}'
+  +'.sig{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:24px;font-size:0.8em}'
+  +'.sline{border-top:1px solid #555;padding-top:4px;margin-top:28px;text-align:center;color:#555}'
+  +'.foot{text-align:center;font-size:0.72em;color:#999;margin-top:18px;border-top:1px solid #eee;padding-top:8px}'
+  +'.pbtn{display:block;margin:18px auto 0;padding:10px 32px;background:#4a0080;color:white;border:none;border-radius:6px;font-size:0.95em;cursor:pointer;letter-spacing:1px}'
+  +'@media print{.pbtn{display:none} body{padding:10px}}'
+  +'</style></head><body>'
+  +'<div class="hdr"><img src="/images/logo.jpeg" class="logo" onerror="this.style.display='none'">'
+  +'<div class="sn">'+sn+'</div><div class="sm">'+sm+'</div>'
+  +'<div class="dtitle">Official Fee Receipt</div></div>'
+  +'<div class="meta"><span><b>Receipt No:</b> '+rcptNo+'</span>'
+  +'<span><b>Date:</b> '+new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'})+'</span></div>'
+  +'<div class="sbox">'
+  +'<div><div class="lbl">Student Name</div><div class="val">'+(student.d_student&&student.d_student.full_name||name)+'</div></div>'
+  +'<div><div class="lbl">Adm. Number</div><div class="val">'+(student.d_student&&student.d_student.admission_number||'-')+'</div></div>'
+  +'<div><div class="lbl">Class</div><div class="val">'+(student.d_student&&student.d_student.class_name||'-')+'</div></div>'
+  +'<div><div class="lbl">Term</div><div class="val">'+(student.d_term&&student.d_term.name||'-')+'</div></div>'
+  +'</div>'
+  +'<table><thead><tr><th>#</th><th>Date</th><th>Description</th><th>Method</th><th style="text-align:right">Amount (GH&#8373;)</th></tr></thead>'
+  +'<tbody>'+(payments.length?rows:noRows)+'</tbody></table>'
+  +'<div class="tbox">'
+  +'<div class="trow"><span>Total Fee Charged:</span><span><b>GH&#8373; '+Number(student.d_totalFee||0).toLocaleString('en-GH',{minimumFractionDigits:2})+'</b></span></div>'
+  +'<div class="trow"><span>Total Paid:</span><span style="color:#2e7d32"><b>GH&#8373; '+Number(student.d_totalPaid||0).toLocaleString('en-GH',{minimumFractionDigits:2})+'</b></span></div>'
+  +'<div class="trow" style="border-top:1px solid #ccc;margin-top:6px;padding-top:6px"><span><b>Balance Outstanding:</b></span>'
+  +'<span style="font-weight:700;color:'+(bal<0?'#c62828':'#2e7d32')+'">GH&#8373; '+bal.toLocaleString('en-GH',{minimumFractionDigits:2})+'</span></div>'
+  +'</div>'
+  +'<div class="sig"><div><div class="sline">Cashier / Accounts Officer</div></div>'
+  +'<div><div class="sline">Parent / Guardian Signature</div></div></div>'
+  +'<div class="foot">This is an official receipt of '+sn+'. Please keep for your records.</div>'
+  +'<button class="pbtn" onclick="window.print()">Print Receipt</button>'
+  +'</body></html>');
+  w.document.close();
 }
+
 // ── GRADES ────────────────────────────────────────────────
 async function loadGrades(){
   document.getElementById('tab-grades').innerHTML=`
@@ -947,21 +980,77 @@ async function delTimetable(id){
 }
 
 function printTimetable(){
-  const cid=document.getElementById('tt_class')?.value;
-  const cname=_classes.find(c=>c.id==cid)?.name||'';
-  const content=document.getElementById('ttView').innerHTML;
-  const w=window.open('','_blank');
-  w.document.write(`<!DOCTYPE html><html><head><style>
-    body{font-family:sans-serif;padding:20px;} table{width:100%;border-collapse:collapse;margin-bottom:16px;}
-    th{background:#4a0080;color:white;padding:7px;text-align:left;font-size:0.85em;}
-    td{padding:7px;border-bottom:1px solid #eee;font-size:0.85em;}
-    h2{color:#4a0080;} h3{color:#1a237e;margin:12px 0 6px;}
-  </style></head><body>
-    <h2>Unto Others International School</h2>
-    <h3>Timetable — ${cname}</h3>
-    ${content}
-    <button onclick="window.print()" style="padding:10px 24px;background:#4a0080;color:white;border:none;border-radius:8px;cursor:pointer;margin-top:12px">🖨️ Print</button>
-  </body></html>`);
+  const cid=document.getElementById('tt_class')&&document.getElementById('tt_class').value;
+  const cname=(_classes.find(function(c){return c.id==cid;})||{}).name||'All Classes';
+  const days=['Monday','Tuesday','Wednesday','Thursday','Friday'];
+  const settings_sn='Unto Others International School';
+  const allPeriods=[];
+  const byDay={};
+  days.forEach(function(d){byDay[d]=[];});
+  if(window._ttData&&window._ttData.length){
+    window._ttData.forEach(function(p){
+      if(!allPeriods.includes(p.period_number))allPeriods.push(p.period_number);
+      if(byDay[p.day])byDay[p.day].push(p);
+    });
+    allPeriods.sort(function(a,b){return a-b;});
+  }
+  let tableHead='<tr><th style="background:#4a0080;color:white;padding:8px 10px;border:1px solid #ccc">Period</th>';
+  days.forEach(function(d){tableHead+='<th style="background:#4a0080;color:white;padding:8px 10px;border:1px solid #ccc;min-width:100px">'+d+'</th>';});
+  tableHead+='</tr>';
+  let tableBody='';
+  if(allPeriods.length===0){
+    tableBody='<tr><td colspan="6" style="text-align:center;padding:20px;color:#999">No timetable entries found</td></tr>';
+  } else {
+    allPeriods.forEach(function(pn){
+      tableBody+='<tr>';
+      tableBody+='<td style="background:#f5f0ff;font-weight:700;padding:8px 10px;border:1px solid #eee;text-align:center">'+pn+'</td>';
+      days.forEach(function(d){
+        const entry=byDay[d].find(function(e){return e.period_number==pn;});
+        if(entry){
+          tableBody+='<td style="padding:8px 10px;border:1px solid #eee;vertical-align:top">'
+            +'<div style="font-weight:600;font-size:0.88em;color:#1a237e">'+entry.subject+'</div>'
+            +'<div style="font-size:0.75em;color:#555">'+entry.start_time+' - '+entry.end_time+'</div>'
+            +(entry.teacher_name?'<div style="font-size:0.72em;color:#4a0080">'+entry.teacher_name+'</div>':'')
+            +'</td>';
+        } else {
+          tableBody+='<td style="padding:8px 10px;border:1px solid #eee;color:#ccc;text-align:center;font-size:0.8em">—</td>';
+        }
+      });
+      tableBody+='</tr>';
+    });
+  }
+  const w=window.open('','_blank','width=900,height=700');
+  w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Timetable</title><style>'
+  +'*{margin:0;padding:0;box-sizing:border-box}'
+  +'body{font-family:Arial,sans-serif;padding:28px;color:#111;background:#fff}'
+  +'.hdr{text-align:center;border-bottom:3px double #4a0080;padding-bottom:14px;margin-bottom:20px}'
+  +'.logo{width:65px;height:65px;border-radius:50%;border:3px solid #f5c800;object-fit:cover}'
+  +'.sn{font-size:1.2em;font-weight:700;color:#4a0080;margin:6px 0 2px;text-transform:uppercase;letter-spacing:1px}'
+  +'.sm{font-size:0.78em;color:#666;font-style:italic}'
+  +'.doctitle{font-size:1em;font-weight:700;background:#4a0080;color:white;display:inline-block;padding:3px 20px;border-radius:3px;margin-top:8px;letter-spacing:2px;text-transform:uppercase}'
+  +'.meta{display:flex;justify-content:space-between;font-size:0.82em;color:#555;margin-bottom:16px;padding:6px 10px;background:#f5f0ff;border-radius:5px;border:1px solid #d0bfff}'
+  +'table{width:100%;border-collapse:collapse;font-size:0.85em}'
+  +'.sig{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-top:32px;font-size:0.8em}'
+  +'.sline{border-top:1px solid #555;padding-top:4px;margin-top:28px;text-align:center;color:#555}'
+  +'.pbtn{display:block;margin:20px auto 0;padding:10px 32px;background:#4a0080;color:white;border:none;border-radius:6px;font-size:0.95em;cursor:pointer;letter-spacing:1px}'
+  +'@media print{.pbtn{display:none} body{padding:10px}}'
+  +'</style></head><body>'
+  +'<div class="hdr">'
+  +'<img src="/images/logo.jpeg" class="logo" onerror="this.style.display='none'">'
+  +'<div class="sn">'+settings_sn+'</div>'
+  +'<div class="sm">Faith and Righteousness</div>'
+  +'<div class="doctitle">Class Timetable</div>'
+  +'</div>'
+  +'<div class="meta"><span><b>Class:</b> '+cname+'</span><span><b>Academic Year:</b> '+new Date().getFullYear()+'/'+(new Date().getFullYear()+1)+'</span><span><b>Printed:</b> '+new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'})+'</span></div>'
+  +'<table><thead>'+tableHead+'</thead><tbody>'+tableBody+'</tbody></table>'
+  +'<div class="sig">'
+  +'<div><div class="sline">Class Teacher</div></div>'
+  +'<div><div class="sline">Head Teacher / Principal</div></div>'
+  +'<div><div class="sline">Date</div></div>'
+  +'</div>'
+  +'<button class="pbtn" onclick="window.print()">Print Timetable</button>'
+  +'</body></html>');
+  w.document.close();
 }
 
 // ── REPORTS ───────────────────────────────────────────────
@@ -1016,38 +1105,94 @@ async function showReportCard(){
   const sid=document.getElementById('rc_student').value;
   const tid=document.getElementById('rc_term').value;
   if(!sid||!tid){alert('Select term and student');return;}
-  const d=await api(`/api/grades/report-card/${sid}?term_id=${tid}`).then(r=>r.json());
-  const attRate=d.attendance?.total?Math.round((d.attendance.present/d.attendance.total)*100):0;
-  const html=`<div class="section" id="rcPrint">
-    <div style="text-align:center;border-bottom:2px solid #4a0080;padding-bottom:14px;margin-bottom:14px">
-      <img src="/images/logo.jpeg" style="width:70px;height:70px;border-radius:50%;object-fit:cover;border:3px solid #f5c800" onerror="this.style.display='none'">
-      <h2 style="color:#4a0080;margin:8px 0 2px;font-size:1.1em">${d.settings?.school_name||'Unto Others International School'}</h2>
-      <p style="color:#888;font-size:0.8em;margin:0">${d.settings?.school_motto||'Faith and Righteousness'}</p>
-      <h3 style="margin:10px 0 2px;font-size:1em">STUDENT REPORT CARD</h3>
-      <p style="color:#666;font-size:0.85em">${d.term?.name||''}</p>
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;font-size:0.87em">
-      <div><b>Name:</b> ${d.student.full_name}</div>
-      <div><b>Adm No:</b> ${d.student.admission_number}</div>
-      <div><b>Class:</b> ${d.student.class_name}</div>
-      <div><b>Attendance:</b> ${d.attendance?.present||0}/${d.attendance?.total||0} (${attRate}%)</div>
-    </div>
-    <table style="margin-bottom:14px"><thead><tr><th>Subject</th><th>CA1</th><th>CA2</th><th>Exam</th><th>Total</th><th>Grade</th><th>Remark</th></tr></thead>
-    <tbody>${d.grades.map(g=>`<tr>
-      <td>${g.subject_name}</td><td>${g.ca1}</td><td>${g.ca2}</td><td>${g.exam}</td>
-      <td><b>${g.total}</b></td>
-      <td><b style="color:${g.grade==='A'?'#2e7d32':g.grade==='F'?'#c62828':'#555'}">${g.grade}</b></td>
-      <td>${g.remark}</td></tr>`).join('')}
-    </tbody></table>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center;background:#f8f5ff;border-radius:8px;padding:12px;margin-bottom:14px">
-      <div><div style="font-size:1.6em;font-weight:700;color:#4a0080">${d.average}</div><div style="color:#666;font-size:0.78em">Average</div></div>
-      <div><div style="font-size:1.6em;font-weight:700;color:#2e7d32">${d.overallGrade}</div><div style="color:#666;font-size:0.78em">Grade</div></div>
-      <div><div style="font-size:1.1em;font-weight:700;color:#e65100">${d.overallRemark}</div><div style="color:#666;font-size:0.78em">Remark</div></div>
-    </div>
-    <div style="display:flex;gap:8px" class="no-print">
-      <button class="btn-sm btn-purple" onclick="window.print()">🖨️ Print Report Card</button>
-    </div>
-  </div>`;
+  const d=await api('/api/grades/report-card/'+sid+'?term_id='+tid).then(function(r){return r.json();});
+  const attRate=d.attendance&&d.attendance.total?Math.round((d.attendance.present/d.attendance.total)*100):0;
+  const sn=d.settings&&d.settings.school_name||'Unto Others International School';
+  const sm=d.settings&&d.settings.school_motto||'Faith and Righteousness';
+  const gradeRows=d.grades.map(function(g){
+    const gc=g.grade==='A'?'#2e7d32':g.grade==='F'?'#c62828':g.grade==='B'?'#1565c0':'#555';
+    return '<tr>'
+      +'<td style="padding:6px 8px;border:1px solid #ddd">'+g.subject_name+'</td>'
+      +'<td style="padding:6px 8px;border:1px solid #ddd;text-align:center">'+g.ca1+'</td>'
+      +'<td style="padding:6px 8px;border:1px solid #ddd;text-align:center">'+g.ca2+'</td>'
+      +'<td style="padding:6px 8px;border:1px solid #ddd;text-align:center">'+g.exam+'</td>'
+      +'<td style="padding:6px 8px;border:1px solid #ddd;text-align:center;font-weight:700">'+g.total+'</td>'
+      +'<td style="padding:6px 8px;border:1px solid #ddd;text-align:center;font-weight:700;color:'+gc+'">'+g.grade+'</td>'
+      +'<td style="padding:6px 8px;border:1px solid #ddd">'+g.remark+'</td>'
+      +'</tr>';
+  }).join('');
+  const w=window.open('','_blank','width=700,height=900');
+  w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Report Card</title><style>'
+  +'*{margin:0;padding:0;box-sizing:border-box}'
+  +'body{font-family:Arial,sans-serif;background:#fff;color:#111;padding:28px;max-width:680px;margin:auto}'
+  +'.hdr{text-align:center;border-bottom:4px double #4a0080;padding-bottom:14px;margin-bottom:16px}'
+  +'.logo{width:72px;height:72px;border-radius:50%;border:3px solid #f5c800;object-fit:cover}'
+  +'.sn{font-size:1.2em;font-weight:700;color:#4a0080;margin:6px 0 2px;text-transform:uppercase;letter-spacing:1px}'
+  +'.sm{font-size:0.78em;color:#666;font-style:italic}'
+  +'.doctitle{font-size:1em;font-weight:700;background:#4a0080;color:white;display:inline-block;padding:4px 22px;border-radius:3px;margin-top:8px;letter-spacing:2px;text-transform:uppercase}'
+  +'.infobox{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid #ccc;border-radius:6px;margin-bottom:16px;overflow:hidden;font-size:0.84em}'
+  +'.infocell{padding:7px 12px;border-bottom:1px solid #eee;border-right:1px solid #eee}'
+  +'.infocell:nth-child(even){border-right:none}'
+  +'.infolbl{font-size:0.75em;color:#888;text-transform:uppercase;margin-bottom:2px}'
+  +'.infoval{font-weight:700;color:#222}'
+  +'table{width:100%;border-collapse:collapse;font-size:0.83em;margin-bottom:16px}'
+  +'thead tr{background:#4a0080;color:white}'
+  +'thead th{padding:8px 8px;text-align:center;border:1px solid #3a0060}'
+  +'thead th:first-child{text-align:left}'
+  +'tbody tr:nth-child(even){background:#f9f6ff}'
+  +'.sumbox{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;text-align:center;background:#f5f0ff;border:1px solid #d0bfff;border-radius:8px;padding:14px;margin-bottom:16px}'
+  +'.sumval{font-size:1.5em;font-weight:700;color:#4a0080}'
+  +'.sumlbl{color:#666;font-size:0.75em;margin-top:2px}'
+  +'.remarksbox{border:1px solid #ccc;border-radius:6px;padding:12px;margin-bottom:16px;font-size:0.84em}'
+  +'.remarksbox h4{color:#4a0080;margin-bottom:8px;font-size:0.9em;text-transform:uppercase;letter-spacing:1px}'
+  +'.remarkline{border-bottom:1px dotted #bbb;padding:6px 0;display:flex;justify-content:space-between}'
+  +'.sig{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-top:28px;font-size:0.8em}'
+  +'.sline{border-top:1px solid #555;padding-top:4px;margin-top:28px;text-align:center;color:#555}'
+  +'.foot{text-align:center;font-size:0.72em;color:#999;margin-top:16px;border-top:1px solid #eee;padding-top:8px}'
+  +'.pbtn{display:block;margin:18px auto 0;padding:10px 32px;background:#4a0080;color:white;border:none;border-radius:6px;font-size:0.95em;cursor:pointer;letter-spacing:1px}'
+  +'@media print{.pbtn{display:none} body{padding:10px}}'
+  +'</style></head><body>'
+  +'<div class="hdr">'
+  +'<img src="/images/logo.jpeg" class="logo" onerror="this.style.display='none'">'
+  +'<div class="sn">'+sn+'</div>'
+  +'<div class="sm">'+sm+'</div>'
+  +'<div class="doctitle">Student Report Card</div>'
+  +'</div>'
+  +'<div class="infobox">'
+  +'<div class="infocell"><div class="infolbl">Full Name</div><div class="infoval">'+d.student.full_name+'</div></div>'
+  +'<div class="infocell"><div class="infolbl">Admission No.</div><div class="infoval">'+d.student.admission_number+'</div></div>'
+  +'<div class="infocell"><div class="infolbl">Class</div><div class="infoval">'+d.student.class_name+'</div></div>'
+  +'<div class="infocell"><div class="infolbl">Term</div><div class="infoval">'+(d.term&&d.term.name||'-')+'</div></div>'
+  +'<div class="infocell"><div class="infolbl">Attendance</div><div class="infoval">'+(d.attendance&&d.attendance.present||0)+'/'+(d.attendance&&d.attendance.total||0)+' ('+attRate+'%)</div></div>'
+  +'<div class="infocell"><div class="infolbl">Date Printed</div><div class="infoval">'+new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'})+'</div></div>'
+  +'</div>'
+  +'<table>'
+  +'<thead><tr><th style="text-align:left;padding:8px">Subject</th><th>CA 1<br><small>(30)</small></th><th>CA 2<br><small>(20)</small></th><th>Exam<br><small>(50)</small></th><th>Total<br><small>(100)</small></th><th>Grade</th><th style="text-align:left;padding:8px">Remark</th></tr></thead>'
+  +'<tbody>'+gradeRows+'</tbody>'
+  +'</table>'
+  +'<div class="sumbox">'
+  +'<div><div class="sumval">'+d.average+'</div><div class="sumlbl">Overall Average</div></div>'
+  +'<div><div class="sumval" style="color:'+(d.overallGrade==='A'?'#2e7d32':d.overallGrade==='F'?'#c62828':'#1565c0')+'">'+d.overallGrade+'</div><div class="sumlbl">Grade</div></div>'
+  +'<div><div class="sumval" style="font-size:1.1em;color:#e65100">'+d.overallRemark+'</div><div class="sumlbl">Remark</div></div>'
+  +'</div>'
+  +'<div class="remarksbox">'
+  +'<h4>Remarks</h4>'
+  +'<div class="remarkline"><span>Class Teacher's Remark:</span><span style="min-width:200px;border-bottom:1px dotted #999">&nbsp;</span></div>'
+  +'<div class="remarkline" style="margin-top:8px"><span>Head Teacher's Remark:</span><span style="min-width:200px;border-bottom:1px dotted #999">&nbsp;</span></div>'
+  +'<div class="remarkline" style="margin-top:8px"><span>Next Term Begins:</span><span style="min-width:200px;border-bottom:1px dotted #999">&nbsp;</span></div>'
+  +'</div>'
+  +'<div class="sig">'
+  +'<div><div class="sline">Class Teacher</div></div>'
+  +'<div><div class="sline">Head Teacher / Principal</div></div>'
+  +'<div><div class="sline">Parent / Guardian</div></div>'
+  +'</div>'
+  +'<div class="foot">'+sn+' &mdash; '+sm+'</div>'
+  +'<button class="pbtn" onclick="window.print()">Print Report Card</button>'
+  +'</body></html>');
+  w.document.close();
+  const html='<div class="section" id="rcPrint" style="text-align:center;padding:20px">'
+    +'<p style="color:#2e7d32;font-size:0.9em">Report card generated in new window. <button class="btn-sm btn-purple" onclick="showReportCard()">Regenerate</button></p>'
+    +'</div>';
   document.getElementById('reportCardView').innerHTML=html;
   document.getElementById('reportCardView').scrollIntoView({behavior:'smooth'});
 }
@@ -1055,48 +1200,161 @@ async function showReportCard(){
 async function showClassResult(){
   const cid=document.getElementById('cr_class').value;
   const tid=document.getElementById('cr_term').value;
-  const d=await api(`/api/grades/class-result/${cid}/${tid}`).then(r=>r.json());
-  const cname=_classes.find(c=>c.id==cid)?.name||'';
-  const tname=_terms.find(t=>t.id==tid)?.name||'';
-  document.getElementById('classResultView').innerHTML=`<div class="section">
-    <div class="flex-between" style="margin-bottom:10px">
-      <h3>Result Sheet — ${cname} — ${tname}</h3>
-      <button class="btn-sm btn-purple" onclick="window.print()">🖨️ Print</button>
-    </div>
-    <table><thead><tr><th>Pos</th><th>Student</th><th>Adm No</th>
-      ${d.subjects.map(s=>`<th>${s.name}</th>`).join('')}
-      <th>Average</th><th>Grade</th></tr></thead>
-    <tbody>${d.students.map(s=>`<tr>
-      <td><b>${s.position}</b></td><td>${s.full_name}</td><td>${s.admission_number}</td>
-      ${d.subjects.map(sub=>{const g=s.grades.find(g=>g.subject_id==sub.id);return`<td>${g?g.total:'-'}</td>`;}).join('')}
-      <td><b>${s.average}</b></td>
-      <td><b style="color:${s.grade==='A'?'#2e7d32':s.grade==='F'?'#c62828':'#555'}">${s.grade}</b></td>
-    </tr>`).join('')}</tbody></table>
-  </div>`;
+  const d=await api('/api/grades/class-result/'+cid+'/'+tid).then(function(r){return r.json();});
+  const cname=(_classes.find(function(c){return c.id==cid;})||{}).name||'';
+  const tname=(_terms.find(function(t){return t.id==tid;})||{}).name||'';
+  const subjectCols=d.subjects.map(function(s){return '<th style="padding:7px 5px;border:1px solid #3a0060;min-width:55px;font-size:0.78em">'+s.name+'</th>';}).join('');
+  const studentRows=d.students.map(function(s){
+    const gc=s.grade==='A'?'#2e7d32':s.grade==='F'?'#c62828':s.grade==='B'?'#1565c0':'#555';
+    const subCells=d.subjects.map(function(sub){
+      const g=s.grades.find(function(g){return g.subject_id==sub.id;});
+      const score=g?g.total:'-';
+      const sc=g&&g.total>=80?'#2e7d32':g&&g.total<50?'#c62828':'';
+      return '<td style="padding:6px 5px;border:1px solid #eee;text-align:center;font-size:0.82em'+(sc?';color:'+sc+';font-weight:600':'')+'">'+score+'</td>';
+    }).join('');
+    return '<tr>'
+      +'<td style="padding:6px 8px;border:1px solid #eee;text-align:center;font-weight:700;color:#4a0080">'+s.position+'</td>'
+      +'<td style="padding:6px 8px;border:1px solid #eee;font-size:0.85em">'+s.full_name+'</td>'
+      +'<td style="padding:6px 8px;border:1px solid #eee;font-size:0.8em;color:#666">'+s.admission_number+'</td>'
+      +subCells
+      +'<td style="padding:6px 8px;border:1px solid #eee;text-align:center;font-weight:700">'+s.average+'</td>'
+      +'<td style="padding:6px 8px;border:1px solid #eee;text-align:center;font-weight:700;color:'+gc+'">'+s.grade+'</td>'
+      +'</tr>';
+  }).join('');
+  const w=window.open('','_blank','width=1000,height=800');
+  w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Class Result Sheet</title><style>'
+  +'*{margin:0;padding:0;box-sizing:border-box}'
+  +'body{font-family:Arial,sans-serif;background:#fff;color:#111;padding:24px}'
+  +'.hdr{text-align:center;border-bottom:4px double #1a237e;padding-bottom:14px;margin-bottom:18px}'
+  +'.logo{width:65px;height:65px;border-radius:50%;border:3px solid #f5c800;object-fit:cover}'
+  +'.sn{font-size:1.15em;font-weight:700;color:#1a237e;margin:6px 0 2px;text-transform:uppercase;letter-spacing:1px}'
+  +'.sm{font-size:0.78em;color:#666;font-style:italic}'
+  +'.doctitle{font-size:1em;font-weight:700;background:#1a237e;color:white;display:inline-block;padding:4px 22px;border-radius:3px;margin-top:8px;letter-spacing:2px;text-transform:uppercase}'
+  +'.meta{display:flex;justify-content:space-between;font-size:0.82em;color:#555;margin-bottom:14px;padding:7px 12px;background:#f0f4ff;border-radius:5px;border:1px solid #c5cae9}'
+  +'table{width:100%;border-collapse:collapse;font-size:0.83em}'
+  +'thead tr{background:#1a237e;color:white}'
+  +'thead th{padding:8px 8px;text-align:left;border:1px solid #0d1b6e}'
+  +'tbody tr:nth-child(even){background:#f5f7ff}'
+  +'tbody tr:hover{background:#e8eaf6}'
+  +'.sig{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-top:32px;font-size:0.8em}'
+  +'.sline{border-top:1px solid #555;padding-top:4px;margin-top:28px;text-align:center;color:#555}'
+  +'.foot{text-align:center;font-size:0.72em;color:#999;margin-top:16px;border-top:1px solid #eee;padding-top:8px}'
+  +'.pbtn{display:block;margin:18px auto 0;padding:10px 32px;background:#1a237e;color:white;border:none;border-radius:6px;font-size:0.95em;cursor:pointer;letter-spacing:1px}'
+  +'@media print{.pbtn{display:none} body{padding:8px} table{font-size:0.75em}}'
+  +'</style></head><body>'
+  +'<div class="hdr">'
+  +'<img src="/images/logo.jpeg" class="logo" onerror="this.style.display='none'">'
+  +'<div class="sn">Unto Others International School</div>'
+  +'<div class="sm">Faith and Righteousness</div>'
+  +'<div class="doctitle">Class Result Sheet</div>'
+  +'</div>'
+  +'<div class="meta">'
+  +'<span><b>Class:</b> '+cname+'</span>'
+  +'<span><b>Term:</b> '+tname+'</span>'
+  +'<span><b>No. of Students:</b> '+d.students.length+'</span>'
+  +'<span><b>Printed:</b> '+new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'})+'</span>'
+  +'</div>'
+  +'<table>'
+  +'<thead><tr>'
+  +'<th style="padding:8px;border:1px solid #0d1b6e;min-width:40px">Pos.</th>'
+  +'<th style="padding:8px;border:1px solid #0d1b6e;min-width:150px">Student Name</th>'
+  +'<th style="padding:8px;border:1px solid #0d1b6e">Adm. No.</th>'
+  +subjectCols
+  +'<th style="padding:8px;border:1px solid #0d1b6e">Average</th>'
+  +'<th style="padding:8px;border:1px solid #0d1b6e">Grade</th>'
+  +'</tr></thead>'
+  +'<tbody>'+studentRows+'</tbody>'
+  +'</table>'
+  +'<div class="sig">'
+  +'<div><div class="sline">Class Teacher</div></div>'
+  +'<div><div class="sline">Head Teacher / Principal</div></div>'
+  +'<div><div class="sline">Date / Stamp</div></div>'
+  +'</div>'
+  +'<div class="foot">Unto Others International School &mdash; Faith and Righteousness &mdash; Confidential</div>'
+  +'<button class="pbtn" onclick="window.print()">Print Result Sheet</button>'
+  +'</body></html>');
+  w.document.close();
+  document.getElementById('classResultView').innerHTML='<div class="section" style="text-align:center;padding:16px"><p style="color:#2e7d32;font-size:0.9em">Result sheet opened in new window.</p></div>';
 }
 
 async function generateIDCards(){
   const cid=document.getElementById('qr_class').value;
-  const cname=_classes.find(c=>c.id==cid)?.name||'';
-  document.getElementById('idCardsView').innerHTML='<div class="section"><p style="text-align:center;color:#666">⏳ Generating...</p></div>';
-  const students=await api('/api/admin/students?class_id='+cid).then(r=>r.json());
+  const cname=(_classes.find(function(c){return c.id==cid;})||{}).name||'';
+  document.getElementById('idCardsView').innerHTML='<div class="section"><p style="text-align:center;color:#666">Generating ID cards...</p></div>';
+  const students=await api('/api/admin/students?class_id='+cid).then(function(r){return r.json();});
   if(!students.length){document.getElementById('idCardsView').innerHTML='<div class="section"><p style="color:#e53935">No students in this class.</p></div>';return;}
-  const qrData=await Promise.all(students.map(s=>api('/api/students/'+s.id+'/qr').then(r=>r.json())));
-  document.getElementById('idCardsView').innerHTML=`
-    <div class="section no-print flex-between" style="margin-bottom:10px">
-      <h3>✅ ${students.length} ID Cards — ${cname}</h3>
-      <button class="btn-sm btn-purple" onclick="window.print()">🖨️ Print All</button>
-    </div>
-    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px" id="idGrid">
-      ${qrData.map(d=>`<div style="border:2px dashed #ccc;border-radius:10px;padding:12px;text-align:center;background:white;page-break-inside:avoid">
-        <img src="/images/logo.jpeg" style="width:45px;height:45px;border-radius:50%;border:2px solid #f5c800;object-fit:cover" onerror="this.style.display='none'">
-        <div style="font-weight:700;font-size:0.75em;color:#4a0080;margin:4px 0">Unto Others International School</div>
-        <img src="${d.qr}" style="width:110px;height:110px;margin:4px 0">
-        <div style="font-weight:700;font-size:0.82em">${d.student.full_name}</div>
-        <div style="font-size:0.72em;color:#555">Adm: ${d.student.admission_number}</div>
-        <div style="font-size:0.72em;color:#4a0080;font-weight:600">${cname}</div>
-      </div>`).join('')}
-    </div>`;
+  const qrData=await Promise.all(students.map(function(s){return api('/api/students/'+s.id+'/qr').then(function(r){return r.json();});}));
+  const cards=qrData.map(function(d){
+    return '<div style="'
+      +'width:85.6mm;height:54mm;'
+      +'border:2px solid #4a0080;border-radius:8px;'
+      +'background:linear-gradient(135deg,#f5f0ff 0%,#fff 60%,#e8f5e9 100%);'
+      +'display:inline-flex;flex-direction:column;align-items:center;justify-content:space-between;'
+      +'padding:6px 8px;box-sizing:border-box;page-break-inside:avoid;vertical-align:top;'
+      +'font-family:Arial,sans-serif;position:relative;overflow:hidden;margin:4px'
+      +'">'
+      +'<div style="position:absolute;top:0;left:0;right:0;height:14px;background:#4a0080"></div>'
+      +'<div style="margin-top:14px;width:100%;display:flex;align-items:center;gap:6px">'
+      +'<img src="/images/logo.jpeg" style="width:32px;height:32px;border-radius:50%;border:2px solid #f5c800;object-fit:cover" onerror="this.style.display='none'">'
+      +'<div style="flex:1">'
+      +'<div style="font-size:6.5px;font-weight:700;color:#4a0080;text-transform:uppercase;letter-spacing:0.5px;line-height:1.2">Unto Others International School</div>'
+      +'<div style="font-size:5.5px;color:#666;font-style:italic">Faith and Righteousness</div>'
+      +'</div>'
+      +'</div>'
+      +'<div style="width:100%;display:flex;align-items:center;gap:8px;margin:2px 0">'
+      +'<div style="width:44px;height:44px;border:1.5px solid #ccc;border-radius:4px;background:#f9f9f9;display:flex;align-items:center;justify-content:center;flex-shrink:0">'
+      +'<span style="font-size:7px;color:#bbb;text-align:center">PHOTO</span>'
+      +'</div>'
+      +'<div style="flex:1">'
+      +'<div style="font-size:8px;font-weight:700;color:#1a237e;line-height:1.3">'+d.student.full_name+'</div>'
+      +'<div style="font-size:6.5px;color:#444;margin-top:2px"><b>Adm:</b> '+d.student.admission_number+'</div>'
+      +'<div style="font-size:6.5px;color:#4a0080;font-weight:600"><b>Class:</b> '+cname+'</div>'
+      +'</div>'
+      +'<img src="'+d.qr+'" style="width:44px;height:44px;flex-shrink:0">'
+      +'</div>'
+      +'<div style="position:absolute;bottom:0;left:0;right:0;height:10px;background:#4a0080;display:flex;align-items:center;justify-content:center">'
+      +'<span style="font-size:5px;color:white;letter-spacing:1px">STUDENT ID CARD</span>'
+      +'</div>'
+      +'</div>';
+  }).join('');
+  document.getElementById('idCardsView').innerHTML=
+    '<div class="section no-print" style="margin-bottom:10px;display:flex;justify-content:space-between;align-items:center">'
+    +'<h3>'+students.length+' ID Cards — '+cname+'</h3>'
+    +'<button class="btn-sm btn-purple" onclick="printIDCards()">Print All ID Cards</button>'
+    +'</div>'
+    +'<div id="idGrid" style="display:flex;flex-wrap:wrap;gap:8px;padding:8px">'+cards+'</div>';
+  window._idCardsHTML=cards;
+  window._idCardsClass=cname;
+  window._idCardsCount=students.length;
+}
+
+function printIDCards(){
+  const cards=window._idCardsHTML||'';
+  const cname=window._idCardsClass||'';
+  const count=window._idCardsCount||0;
+  const w=window.open('','_blank','width=900,height=700');
+  w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Student ID Cards</title><style>'
+  +'*{margin:0;padding:0;box-sizing:border-box}'
+  +'body{font-family:Arial,sans-serif;background:#fff;padding:20px}'
+  +'.hdr{text-align:center;margin-bottom:16px;padding-bottom:12px;border-bottom:2px solid #4a0080}'
+  +'.sn{font-size:1.1em;font-weight:700;color:#4a0080;text-transform:uppercase;letter-spacing:1px}'
+  +'.meta{font-size:0.82em;color:#555;margin-top:4px}'
+  +'.grid{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-start}'
+  +'.pbtn{display:block;margin:16px auto 0;padding:10px 32px;background:#4a0080;color:white;border:none;border-radius:6px;font-size:0.95em;cursor:pointer;letter-spacing:1px}'
+  +'@media print{'
+  +'.pbtn{display:none}'
+  +'.hdr{display:none}'
+  +'body{padding:5mm}'
+  +'}'
+  +'</style></head><body>'
+  +'<div class="hdr">'
+  +'<div class="sn">Unto Others International School</div>'
+  +'<div class="meta">Student ID Cards &mdash; Class: '+cname+' &mdash; '+count+' cards &mdash; Printed: '+new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'})+'</div>'
+  +'</div>'
+  +'<div class="grid">'+cards+'</div>'
+  +'<button class="pbtn" onclick="window.print()">Print All ID Cards</button>'
+  +'</body></html>');
+  w.document.close();
 }
 
 function exportCSV(){

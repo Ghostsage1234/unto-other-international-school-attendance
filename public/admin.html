@@ -164,7 +164,7 @@ tr:hover td{background:#faf5ff;}
 </div>
 
 <!-- APP -->
-<div id="app">
+<div id="app" style="display:none">
   <div class="topbar no-print">
     <div class="topbar-left">
       <img src="/images/logo.jpeg" onerror="this.style.display='none'" alt="">
@@ -207,45 +207,26 @@ let token = localStorage.getItem('admin_token');
 let _classes = [], _terms = [], _currency = 'GH₵';
 
 if(token){
-  // Verify token is still valid before showing app
-  fetch('/api/admin/classes',{headers:{'Authorization':'Bearer '+token}})
-    .then(r=>{
-      if(r.ok){
-        document.getElementById('loginWrap').style.display='none';
-        document.getElementById('app').style.display='block';
-        init();
-      } else {
-        localStorage.removeItem('admin_token');
-        token=null;
-      }
-    }).catch(()=>{
-      localStorage.removeItem('admin_token');
-      token=null;
-    });
+  document.getElementById('loginWrap').style.display='none';
+  document.getElementById('app').style.display='block';
+  init();
 }
 
 async function doLogin(){
-  alert('doLogin called');
   const u=document.getElementById('loginUser').value.trim();
   const p=document.getElementById('loginPass').value;
-  alert('u='+u+' p='+p);
-  if(!u||!p){alert('Enter username and password');return;}
-  try{
-    alert('Fetching...');
-    const r=await fetch('/api/auth/admin/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p})});
-    alert('Status: '+r.status);
-    const d=await r.json();
-    alert('Response: '+JSON.stringify(d));
-    if(d.token){
-      localStorage.setItem('admin_token',d.token);
-      token=d.token;
-      document.getElementById('loginWrap').style.display='none';
-      document.getElementById('app').style.display='block';
-      init();
-    } else {
-      alert(d.error||'Login failed');
-    }
-  } catch(e){ alert('Network error: '+e.message); }
+  if(!u||!p){showAlert('loginAlert','error','Enter username and password');return;}
+  const r=await fetch('/api/auth/admin/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p})});
+  const d=await r.json();
+  if(d.token){
+    localStorage.setItem('admin_token',d.token);
+    token=d.token;
+    document.getElementById('loginWrap').style.display='none';
+    document.getElementById('app').style.display='block';
+    init();
+  } else {
+    showAlert('loginAlert','error',d.error||'Login failed');
+  }
 }
 
 function doLogout(){
@@ -769,22 +750,16 @@ async function savePay(){
 }
 
 async function printReceipt(sid,name,tid){
-  const bal_data=await api('/api/student-balance/'+sid+'?term_Id='+tid).then(function(r){return r.json();});
-  const settings=await api('/api/admin/settings').then(function(r){return r.json();});
-  const payments=await api('/api/fees/payments?student_Id='+sid+'&term_Id='+tid).then(function(r){return r.json();});
+  const student=await api('/api/student-balance/'+sid+'?term_Id='+tid).then(r=>r.json());
+  const settings=await api('/api/admin/settings').then(r=>r.json());
+  const payments=await api('/api/fees/payments?student_Id='+sid+'&term_Id='+tid).then(r=>r.json());
   const rcptNo='RCP-'+tid+'-'+sid+'-'+Date.now().toString().slice(-4);
   const sn=settings.school_name||'Unto Others International School';
   const sm=settings.school_motto||'Faith and Righteousness';
-  const student=bal_data.student||{};
-  const totalFee=Number(bal_data.totalFee||0);
-  const totalPaid=Number(bal_data.totalPaid||0);
-  const balance=Number(bal_data.balance||0);
-  const termName=(_terms&&_terms.find(function(t){return t.id==tid;}))||{};
-  const rows=payments.map(function(p,i){
-    return '<tr><td>'+(i+1)+'</td><td>'+(p.payment_date||'-')+'</td><td>'+(p.label||p.note||'Fee Payment')+'</td><td>'+(p.payment_method||'-')+'</td><td style="text-align:right"><b>GH&#8373; '+Number(p.amount_paid||0).toLocaleString('en-GH',{minimumFractionDigits:2})+'</b></td></tr>';
-  }).join('');
-  const noRows='<tr><td colspan="5" style="text-align:center;color:#999;padding:12px">No payments recorded</td></tr>';
+  const bal=Number(student.d_balance||0);
   const w=window.open('','_blank','width=640,height=820');
+  const rows=payments.map((p,i)=>'<tr><td>'+(i+1)+'</td><td>'+p.payment_date+'</td><td>'+(p.label||'Fee Payment')+'</td><td>'+(p.payment_method||'-')+'</td><td style="text-align:right"><b>GH&#8373; '+Number(p.amount_paid).toLocaleString('en-GH',{minimumFractionDigits:2})+'</b></td></tr>').join('');
+  const noRows='<tr><td colspan="5" style="text-align:center;color:#999;padding:12px">No payments recorded</td></tr>';
   w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Fee Receipt</title><style>'
   +'*{margin:0;padding:0;box-sizing:border-box}'
   +'body{font-family:Times New Roman,Times,serif;background:#fff;color:#111;padding:30px;max-width:580px;margin:auto}'
@@ -814,20 +789,20 @@ async function printReceipt(sid,name,tid){
   +'<div class="sn">'+sn+'</div><div class="sm">'+sm+'</div>'
   +'<div class="dtitle">Official Fee Receipt</div></div>'
   +'<div class="meta"><span><b>Receipt No:</b> '+rcptNo+'</span>'
-  +'<span><b>Date:</b> '+new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'})+'</span></div>'
+  +'<span><b>Date:</b> '+new Date().toLocaleDateString('en-GB')+'</span></div>'
   +'<div class="sbox">'
-  +'<div><div class="lbl">Student Name</div><div class="val">'+(student.full_name||name)+'</div></div>'
-  +'<div><div class="lbl">Adm. Number</div><div class="val">'+(student.admission_number||'-')+'</div></div>'
-  +'<div><div class="lbl">Class</div><div class="val">'+(student.class_name||'-')+'</div></div>'
-  +'<div><div class="lbl">Term</div><div class="val">'+(termName.name||'-')+'</div></div>'
+  +'<div><div class="lbl">Student Name</div><div class="val">'+(student.d_student&&student.d_student.full_name||name)+'</div></div>'
+  +'<div><div class="lbl">Adm. Number</div><div class="val">'+(student.d_student&&student.d_student.admission_number||'-')+'</div></div>'
+  +'<div><div class="lbl">Class</div><div class="val">'+(student.d_student&&student.d_student.class_name||'-')+'</div></div>'
+  +'<div><div class="lbl">Term</div><div class="val">'+(student.d_term&&student.d_term.name||'-')+'</div></div>'
   +'</div>'
   +'<table><thead><tr><th>#</th><th>Date</th><th>Description</th><th>Method</th><th style="text-align:right">Amount (GH&#8373;)</th></tr></thead>'
   +'<tbody>'+(payments.length?rows:noRows)+'</tbody></table>'
   +'<div class="tbox">'
-  +'<div class="trow"><span>Total Fee Charged:</span><span><b>GH&#8373; '+totalFee.toLocaleString('en-GH',{minimumFractionDigits:2})+'</b></span></div>'
-  +'<div class="trow"><span>Total Paid:</span><span style="color:#2e7d32"><b>GH&#8373; '+totalPaid.toLocaleString('en-GH',{minimumFractionDigits:2})+'</b></span></div>'
+  +'<div class="trow"><span>Total Fee Charged:</span><span><b>GH&#8373; '+Number(student.d_totalFee||0).toLocaleString('en-GH',{minimumFractionDigits:2})+'</b></span></div>'
+  +'<div class="trow"><span>Total Paid:</span><span style="color:#2e7d32"><b>GH&#8373; '+Number(student.d_totalPaid||0).toLocaleString('en-GH',{minimumFractionDigits:2})+'</b></span></div>'
   +'<div class="trow" style="border-top:1px solid #ccc;margin-top:6px;padding-top:6px"><span><b>Balance Outstanding:</b></span>'
-  +'<span style="font-weight:700;color:'+(balance<0?'#c62828':'#2e7d32')+'">GH&#8373; '+balance.toLocaleString('en-GH',{minimumFractionDigits:2})+'</span></div>'
+  +'<span style="font-weight:700;color:'+(bal<0?'#c62828':'#2e7d32')+'">GH&#8373; '+bal.toLocaleString('en-GH',{minimumFractionDigits:2})+'</span></div>'
   +'</div>'
   +'<div class="sig"><div><div class="sline">Cashier / Accounts Officer</div></div>'
   +'<div><div class="sline">Parent / Guardian Signature</div></div></div>'
@@ -980,7 +955,6 @@ async function fetchTimetable(){
   const cid=document.getElementById('tt_class')?.value;
   if(!cid)return;
   const data=await api('/api/timetable?class_id='+cid).then(r=>r.json());
-  window._ttData=data;
   const days=['Monday','Tuesday','Wednesday','Thursday','Friday'];
   const byDay={};days.forEach(d=>byDay[d]=[]);
   data.forEach(e=>{if(byDay[e.day])byDay[e.day].push(e);});
@@ -1067,7 +1041,7 @@ function printTimetable(){
   +'<div class="sm">Faith and Righteousness</div>'
   +'<div class="doctitle">Class Timetable</div>'
   +'</div>'
-  +'<div class="meta"><span><b>Class:</b> '+cname+'</span><span><b>Academic Year:</b> '+new Date().getFullYear()+'/'+(new Date().getFullYear()+1)+'</span><span><b>Printed:</b> '+new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'})+'</span></div>'
+  +'<div class="meta"><span><b>Class:</b> '+cname+'</span><span><b>Academic Year:</b> '+new Date().getFullYear()+'/'+(new Date().getFullYear()+1)+'</span><span><b>Printed:</b> '+new Date().toLocaleDateString('en-GB')+'</span></div>'
   +'<table><thead>'+tableHead+'</thead><tbody>'+tableBody+'</tbody></table>'
   +'<div class="sig">'
   +'<div><div class="sline">Class Teacher</div></div>'
@@ -1093,15 +1067,6 @@ async function loadReports(){
     </div>
     <div id="reportCardView"></div>
     <hr class="divider">
-      <div class="section" style="border:2px solid #2e7d32">
-        <h3>&#128200; Progress Report</h3>
-        <div class="row2">
-          <div class="fg"><label>Student</label><select id="pr_student"><option value="">-- Select Student --</option></select></div>
-        </div>
-        <button class="btn btn-primary" style="width:auto;padding:10px 20px" onclick="showProgressReport()">Generate Progress Report</button>
-        <div id="progressReportView"></div>
-      </div>
-      <hr class="divider">
     <div class="section" style="border:2px solid #1a237e">
       <h3>📋 Class Result Sheet</h3>
       <div class="row2">
@@ -1128,7 +1093,6 @@ async function loadReports(){
       <div class="fg"><label>Class (optional)</label><select id="exp_class"><option value="">All Classes</option>${_classes.map(c=>`<option value="${c.id}">${c.name}</option>`).join('')}</select></div>
       <button class="btn btn-grey btn-sm" style="padding:10px 20px" onclick="exportCSV()">⬇️ Download CSV</button>
     </div>`;
-  document.getElementById('pr_student').innerHTML='<option value="">-- Select Student --</option>'+_students.map(s=>'<option value="'+s.id+'">'+s.full_name+'</option>').join('');
 }
 
 async function loadRCStudents(){
@@ -1200,7 +1164,7 @@ async function showReportCard(){
   +'<div class="infocell"><div class="infolbl">Class</div><div class="infoval">'+d.student.class_name+'</div></div>'
   +'<div class="infocell"><div class="infolbl">Term</div><div class="infoval">'+(d.term&&d.term.name||'-')+'</div></div>'
   +'<div class="infocell"><div class="infolbl">Attendance</div><div class="infoval">'+(d.attendance&&d.attendance.present||0)+'/'+(d.attendance&&d.attendance.total||0)+' ('+attRate+'%)</div></div>'
-  +'<div class="infocell"><div class="infolbl">Date Printed</div><div class="infoval">'+new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'})+'</div></div>'
+  +'<div class="infocell"><div class="infolbl">Date Printed</div><div class="infoval">'+new Date().toLocaleDateString('en-GB')+'</div></div>'
   +'</div>'
   +'<table>'
   +'<thead><tr><th style="text-align:left;padding:8px">Subject</th><th>CA 1<br><small>(30)</small></th><th>CA 2<br><small>(20)</small></th><th>Exam<br><small>(50)</small></th><th>Total<br><small>(100)</small></th><th>Grade</th><th style="text-align:left;padding:8px">Remark</th></tr></thead>'
@@ -1288,7 +1252,7 @@ async function showClassResult(){
   +'<span><b>Class:</b> '+cname+'</span>'
   +'<span><b>Term:</b> '+tname+'</span>'
   +'<span><b>No. of Students:</b> '+d.students.length+'</span>'
-  +'<span><b>Printed:</b> '+new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'})+'</span>'
+  +'<span><b>Printed:</b> '+new Date().toLocaleDateString('en-GB')+'</span>'
   +'</div>'
   +'<table>'
   +'<thead><tr>'
@@ -1312,101 +1276,6 @@ async function showClassResult(){
   w.document.close();
   document.getElementById('classResultView').innerHTML='<div class="section" style="text-align:center;padding:16px"><p style="color:#2e7d32;font-size:0.9em">Result sheet opened in new window.</p></div>';
 }
-
-async function showProgressReport() {
-  const sid = document.getElementById('pr_student').value;
-  if (!sid) return alert('Please select a student');
-  const data = await api('/api/grades/progress/' + sid).then(r => r.json());
-  if (data.error) return alert(data.error);
-  const { student, progressData } = data;
-  if (!progressData.length) {
-    document.getElementById('progressReportView').innerHTML = '<p style="color:#c00;margin-top:12px">No grade data found for this student.</p>';
-    return;
-  }
-  const allSubjects = [...new Set(progressData.flatMap(t => t.grades.map(g => g.subject_name)))];
-  const colors = ['#1a237e','#2e7d32','#b71c1c','#e65100','#4a148c','#006064','#37474f'];
-  let html = '<div style="margin-top:20px">';
-  html += '<h4 style="color:#1a237e;margin-bottom:12px">&#128200; ' + student.full_name + ' — Progress Report (' + student.class_name + ')</h4>';
-  // Summary table
-  html += '<table style="width:100%;border-collapse:collapse;font-size:0.82em;margin-bottom:18px">';
-  html += '<thead><tr style="background:#1a237e;color:#fff"><th style="padding:6px 8px;text-align:left">Subject</th>';
-  progressData.forEach(t => { html += '<th style="padding:6px 8px;text-align:center">' + t.term + '</th>'; });
-  html += '<th style="padding:6px 8px;text-align:center">Trend</th></tr></thead><tbody>';
-  allSubjects.forEach((sub, si) => {
-    const scores = progressData.map(t => { const g = t.grades.find(x => x.subject_name === sub); return g ? g.total : null; });
-    const valid = scores.filter(s => s !== null);
-    const trend = valid.length >= 2 ? (valid[valid.length-1] - valid[0] >= 0 ? '&#8679; +' + (valid[valid.length-1]-valid[0]).toFixed(1) : '&#8681; ' + (valid[valid.length-1]-valid[0]).toFixed(1)) : '—';
-    const trendColor = valid.length >= 2 ? (valid[valid.length-1] >= valid[0] ? '#2e7d32' : '#c00') : '#555';
-    html += '<tr style="background:' + (si%2===0?'#f5f5f5':'#fff') + '">';
-    html += '<td style="padding:6px 8px;font-weight:600">' + sub + '</td>';
-    scores.forEach(s => { html += '<td style="padding:6px 8px;text-align:center">' + (s !== null ? s : '—') + '</td>'; });
-    html += '<td style="padding:6px 8px;text-align:center;font-weight:700;color:' + trendColor + '">' + trend + '</td>';
-    html += '</tr>';
-  });
-  // Average row
-  html += '<tr style="background:#1a237e;color:#fff;font-weight:700"><td style="padding:6px 8px">Overall Average</td>';
-  progressData.forEach(t => { html += '<td style="padding:6px 8px;text-align:center">' + t.average + '</td>'; });
-  html += '<td></td></tr>';
-  html += '</tbody></table>';
-  // Bar chart using CSS
-  html += '<h5 style="color:#1a237e;margin-bottom:8px">Average Score Per Term</h5>';
-  html += '<div style="display:flex;align-items:flex-end;gap:16px;height:120px;padding:8px;background:#f5f5f5;border-radius:8px;margin-bottom:16px">';
-  progressData.forEach((t, i) => {
-    const h = Math.round((t.average / 100) * 100);
-    html += '<div style="display:flex;flex-direction:column;align-items:center;flex:1">';
-    html += '<span style="font-size:0.78em;font-weight:700;color:#1a237e;margin-bottom:4px">' + t.average + '</span>';
-    html += '<div style="width:100%;height:' + h + 'px;background:' + (colors[i]||'#1a237e') + ';border-radius:4px 4px 0 0"></div>';
-    html += '<span style="font-size:0.72em;margin-top:4px;text-align:center;color:#333">' + t.term + '</span>';
-    html += '</div>';
-  });
-  html += '</div>';
-  html += '<button class="btn" style="background:#1a237e;color:#fff;padding:8px 18px;margin-top:4px" onclick="printProgressReport()">&#128424; Print Progress Report</button>';
-  html += '</div>';
-  document.getElementById('progressReportView').innerHTML = html;
-  window._progressData = { student, progressData };
-}
-
-function printProgressReport() {
-  if (!window._progressData) return;
-  const { student, progressData } = window._progressData;
-  const allSubjects = [...new Set(progressData.flatMap(t => t.grades.map(g => g.subject_name)))];
-  const w = window.open('','_blank','width=900,height=700');
-  w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Progress Report</title><style>');
-  w.document.write('*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;padding:24px;background:#fff}');
-  w.document.write('.hdr{text-align:center;border-bottom:3px double #1a237e;padding-bottom:14px;margin-bottom:18px}');
-  w.document.write('.logo{width:65px;height:65px;border-radius:50%;object-fit:cover;border:3px solid #1a237e}');
-  w.document.write('h1{font-size:1.1em;color:#1a237e;margin-top:4px}h2{font-size:0.95em;color:#555;font-weight:400}');
-  w.document.write('table{width:100%;border-collapse:collapse;font-size:0.85em;margin-top:14px}');
-  w.document.write('th{background:#1a237e;color:#fff;padding:7px 10px;text-align:center}td{padding:7px 10px;border:1px solid #ddd;text-align:center}');
-  w.document.write('td:first-child{text-align:left;font-weight:600}.avg{background:#1a237e;color:#fff;font-weight:700}');
-  w.document.write('.up{color:#2e7d32;font-weight:700}.dn{color:#c00;font-weight:700}');
-  w.document.write('@media print{button{display:none}body{padding:12px}}');
-  w.document.write('</style></head><body>');
-  w.document.write('<div class="hdr"><img src="/images/logo.jpeg" class="logo" onerror="this.style.display='none'">');
-  w.document.write('<h1>Unto Others International School</h1><h2>Faith and Righteousness</h2>');
-  w.document.write('<div style="margin-top:6px;font-size:0.9em"><b>Student Progress Report</b></div></div>');
-  w.document.write('<p style="margin-bottom:10px"><b>Name:</b> ' + student.full_name + ' &nbsp; <b>Class:</b> ' + student.class_name + ' &nbsp; <b>Admission No:</b> ' + (student.admission_number||'—') + '</p>');
-  w.document.write('<table><thead><tr><th style="text-align:left">Subject</th>');
-  progressData.forEach(t => { w.document.write('<th>' + t.term + '</th>'); });
-  w.document.write('<th>Trend</th></tr></thead><tbody>');
-  allSubjects.forEach(sub => {
-    const scores = progressData.map(t => { const g = t.grades.find(x => x.subject_name === sub); return g ? g.total : null; });
-    const valid = scores.filter(s => s !== null);
-    const trendVal = valid.length >= 2 ? (valid[valid.length-1] - valid[0]) : null;
-    const trendStr = trendVal !== null ? (trendVal >= 0 ? '+'+trendVal.toFixed(1) : trendVal.toFixed(1)) : '—';
-    const trendClass = trendVal !== null ? (trendVal >= 0 ? 'up' : 'dn') : '';
-    w.document.write('<tr><td>' + sub + '</td>');
-    scores.forEach(s => { w.document.write('<td>' + (s !== null ? s : '—') + '</td>'); });
-    w.document.write('<td class="' + trendClass + '">' + trendStr + '</td></tr>');
-  });
-  w.document.write('<tr class="avg"><td>Overall Average</td>');
-  progressData.forEach(t => { w.document.write('<td>' + t.average + '</td>'); });
-  w.document.write('<td></td></tr></tbody></table>');
-  w.document.write('<div style="margin-top:18px;text-align:center"><button onclick="window.print()" style="padding:8px 24px;background:#1a237e;color:#fff;border:none;border-radius:4px;cursor:pointer">Print</button></div>');
-  w.document.write('</body></html>');
-  w.document.close();
-}
-
 
 async function generateIDCards(){
   const cid=document.getElementById('qr_class').value;
@@ -1480,7 +1349,7 @@ function printIDCards(){
   +'</style></head><body>'
   +'<div class="hdr">'
   +'<div class="sn">Unto Others International School</div>'
-  +'<div class="meta">Student ID Cards &mdash; Class: '+cname+' &mdash; '+count+' cards &mdash; Printed: '+new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'})+'</div>'
+  +'<div class="meta">Student ID Cards &mdash; Class: '+cname+' &mdash; '+count+' cards &mdash; Printed: '+new Date().toLocaleDateString('en-GB')+'</div>'
   +'</div>'
   +'<div class="grid">'+cards+'</div>'
   +'<button class="pbtn" onclick="window.print()">Print All ID Cards</button>'
