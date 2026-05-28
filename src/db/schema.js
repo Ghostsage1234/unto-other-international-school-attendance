@@ -158,7 +158,7 @@ const schema = `
     currency_symbol TEXT DEFAULT 'GH₵'
   );
   INSERT OR IGNORE INTO admins (username, password, full_name)
-  VALUES ('admin', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'School Administrator');
+  VALUES ('admin', '$2b$10$VU1/sp0GXH4ljjkPnm19L.nU9/gRvxkckQtgGAe4RC8s6UgG/mXSm', 'School Administrator');
   INSERT OR IGNORE INTO classes (name, level) VALUES
     ('Nursery 1',1),('Nursery 2',2),
     ('KG 1',3),('KG 2',4),
